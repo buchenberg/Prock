@@ -35,6 +35,8 @@ app.Lifetime.ApplicationStopped.Register(OnStopped);
 
 var connectionString = builder.Configuration.GetSection("DrunkenMaster").GetSection("MongoDbUri").Value ?? "mongodb://localhost:27017/";
 var upstreamUrl = builder.Configuration.GetSection("DrunkenMaster").GetSection("UpstreamUrl").Value ?? "https://example.com";
+var host = builder.Configuration.GetSection("DrunkenMaster").GetSection("Host").Value ?? "http://localhost";
+var port = builder.Configuration.GetSection("DrunkenMaster").GetSection("Port").Value ?? "5000";
 
 
 var client = new MongoClient(connectionString);
@@ -144,4 +146,4 @@ foreach (var route in db.MockRoutes)
 }
 
 
-app.Run();
+app.Run($"{host}:{port}");

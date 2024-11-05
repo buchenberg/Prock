@@ -94,9 +94,6 @@ app.MapPost("/drunken-master/api/mock-routes", async (MockRouteDto route, Cancel
     db.MockRoutes.Add(result);
     await db.SaveChangesAsync(cancellationToken);
     app.Logger.LogInformation("Saved {Path} as {Id}", result.Path, result.RouteId);
-    app.Logger.LogInformation("Configuring {Path} ...", route.Path);
-    app.MapMethods(route.Path, new[] { route.Method.ToUpper() },
-        () => result.Mock);
 
     return Results.Created($"/drunken-master/api/mock-routes/{result.RouteId}", result);
 });
@@ -111,6 +108,20 @@ app.MapGet("/drunken-master/api/mock-routes", async (CancellationToken cancellat
         Path = x.Path,
         Mock = JsonSerializer.Deserialize<dynamic>(x.Mock)
     });
+});
+
+app.MapPost("/drunken-master/api/restart", async (CancellationToken cancellationToken) =>
+{
+    
+    string _currentProcess = Path.GetFullPath(Process.GetCurrentProcess().MainModule?.FileName ?? "Program.cs");
+    app.Lifetime.StopApplication();
+    Process.Start(_currentProcess);
+    return await Task.FromResult(0);
+});
+
+app.MapPost("/drunken-master/api/kill", async (CancellationToken cancellationToken) =>
+{
+    app.Lifetime.StopApplication();
 });
 
 

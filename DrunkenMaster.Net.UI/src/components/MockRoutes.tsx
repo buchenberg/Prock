@@ -6,7 +6,7 @@ import { PencilSquare, PlusCircle } from "react-bootstrap-icons";
 
 
 export interface IMockRoute {
-    routeId: string;
+    routeId?: string;
     method: string;
     path: string;
     mock: object;
@@ -16,25 +16,32 @@ export default function MockRoutes() {
 
     const [routes, setRoutes] = useState<IMockRoute[]>();
     const [selectedRoute, setSelectedRoute] = useState<IMockRoute>();
+    const [newRoute, setNewRoute] = useState<IMockRoute>();
 
 
-    const [show, setShow] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
 
-    const handleClose = () => {
+    const handleCloseEditModal = () => {
         setSelectedRoute(undefined);
-        setShow(false);
+        setShowEditModal(false);
     }
-    const handleShow = (route: IMockRoute) => {
+    const handleShowEditModal = (route: IMockRoute) => {
         setSelectedRoute(route);
-        setShow(true);
+        setShowEditModal(true);
     }
 
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     const handleCloseCreateModal = () => {
+        setNewRoute(undefined);
         setShowCreateModal(false);
     }
     const handleShowCreateModal = () => {
+        setNewRoute({
+            method: "",
+            path: "",
+            mock: {}
+        });
         setShowCreateModal(true);
     }
 
@@ -77,7 +84,7 @@ export default function MockRoutes() {
                                             <Card.Title>{route.path}</Card.Title>
                                         </Col>
                                         <Col>
-                                            <PencilSquare className="float-end icon-btn" onClick={() => handleShow(route)} />
+                                            <PencilSquare className="float-end icon-btn" onClick={() => handleShowEditModal(route)} />
                                         </Col>
                                     </Row>
                                 </Card.Header>
@@ -107,7 +114,7 @@ export default function MockRoutes() {
             </div>
 
         }
-        <Modal show={show} onHide={handleClose}>
+        <Modal show={showEditModal} onHide={handleCloseEditModal}>
             <Modal.Header closeButton>
                 <Modal.Title>Edit Mock Route</Modal.Title>
             </Modal.Header>
@@ -115,7 +122,6 @@ export default function MockRoutes() {
                 {selectedRoute &&
                     <Container>
                         <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-                            <Form.Label>Method</Form.Label>
                             <Form.Label>HTTP Method</Form.Label>
                             <Form.Select value={selectedRoute.method}>
                                 <option value={""}>Select...</option>
@@ -129,57 +135,61 @@ export default function MockRoutes() {
                             <Form.Label>Path</Form.Label>
                             <Form.Control type="text" placeholder="/some/path" value={selectedRoute.path} />
                         </Form.Group>
-                        <Editor
-                            theme="vs-dark"
-                            height={"100px"}
-                            defaultLanguage="json"
-                            defaultValue={"{}"}
-                            value={JSON.stringify(selectedRoute.mock, null, 2)} />
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mock Response</Form.Label>
+                            <Editor
+                                theme="vs-dark"
+                                height={"200px"}
+                                defaultLanguage="json"
+                                defaultValue={""}
+                                value={JSON.stringify(selectedRoute.mock, null, 2)} />
+                        </Form.Group>
                     </Container>
                 }
 
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={handleClose}>
+                <Button variant="secondary" onClick={handleCloseEditModal}>
                     Cancel
                 </Button>
-                <Button variant="primary" onClick={handleClose}>
+                <Button variant="primary" onClick={handleCloseEditModal}>
                     Submit
                 </Button>
             </Modal.Footer>
         </Modal>
+
         <Modal show={showCreateModal} onHide={handleCloseCreateModal}>
             <Modal.Header closeButton>
                 <Modal.Title>Add Route</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-
-                <Container>
-                    <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-                        <Form.Label>HTTP Method</Form.Label>
-                        <Form.Select>
-                            <option value={""}>Select...</option>
-                            <option value="Get">Get</option>
-                            <option value="Post">Post</option>
-                            <option value="Put">Put</option>
-                            <option value="Delete">Delete</option>
-                        </Form.Select>
-                    </Form.Group>
-                    <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-                        <Form.Label>Path</Form.Label>
-                        <Form.Control type="text" placeholder="/some/path" />
-                    </Form.Group>
-                    <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-                        <Form.Label>Mock Response</Form.Label>
-                        <Editor
-                            theme="vs-dark"
-                            height={"100px"}
-                            defaultLanguage="json"
-                            defaultValue={""} />
-                    </Form.Group>
-
-                </Container>
-
+                {newRoute &&
+                    <Container>
+                        <Form.Group className="mb-3">
+                            <Form.Label>HTTP Method</Form.Label>
+                            <Form.Select value={newRoute.method}>
+                                <option value={""}>Select...</option>
+                                <option value="Get">Get</option>
+                                <option value="Post">Post</option>
+                                <option value="Put">Put</option>
+                                <option value="Delete">Delete</option>
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Path</Form.Label>
+                            <Form.Control type="text" placeholder="/some/path" value={newRoute.path} />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mock Response</Form.Label>
+                            <Editor
+                                theme="vs-dark"
+                                height={"200px"}
+                                defaultLanguage="json"
+                                defaultValue={""}
+                                value={JSON.stringify(newRoute.mock, null, 2)} />
+                        </Form.Group>
+                    </Container>
+                }
 
             </Modal.Body>
             <Modal.Footer>

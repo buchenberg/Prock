@@ -1,0 +1,7 @@
+.icon-btn {
+    cursor: pointer;
+    transition: all .2s ease-in-out; 
+}
+.icon-btn:hover {
+    transform: scale(1.3); 
+}

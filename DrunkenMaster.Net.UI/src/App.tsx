@@ -1,5 +1,5 @@
 import './App.css'
-import MockRoutes from './MockRoutes'
+import MockRoutes from './components/MockRoutes'
 import { Container, Navbar } from 'react-bootstrap'
 
 function App() {
@@ -11,7 +11,9 @@ function App() {
           <Navbar.Brand href="#home">Drunken Master</Navbar.Brand>
         </Container>
       </Navbar>
-      <MockRoutes />
+      <Container>
+        <MockRoutes />
+      </Container>
     </>
   )
 }

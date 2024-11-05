@@ -94,8 +94,52 @@ app.MapPost("/drunken-master/api/mock-routes", async (MockRouteDto route, Cancel
     db.MockRoutes.Add(result);
     await db.SaveChangesAsync(cancellationToken);
     app.Logger.LogInformation("Saved {Path} as {Id}", result.Path, result.RouteId);
+    var dto = new MockRouteDto
+    {
+        RouteId = result.RouteId,
+        Method = result.Method,
+        Path = result.Path,
+        Mock = JsonSerializer.Deserialize<dynamic>(route.Mock)
+    };
 
-    return Results.Created($"/drunken-master/api/mock-routes/{result.RouteId}", result);
+    return Results.Created($"/drunken-master/api/mock-routes/{result.RouteId}", dto);
+});
+
+app.MapPut("/drunken-master/api/mock-routes", async (MockRouteDto route, CancellationToken cancellationToken) =>
+{
+    var methods = new[]
+    {
+        "Get", "Put", "Post", "Patch", "Delete"
+    };
+    if (methods.All(x => x != route.Method))
+    {
+        return Results.BadRequest($"{route.Method} is not a valid HTTP method");
+    }
+    
+
+    app.Logger.LogInformation("Updating {Path} ...", route.Path);
+    var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == route.RouteId);
+    if (persistedRoute == null)
+    {
+        return Results.BadRequest($"Route {route.RouteId} not found");
+    }
+
+    persistedRoute.Path = route.Path;
+    persistedRoute.Method = route.Method;
+    persistedRoute.Mock = JsonSerializer.Serialize(route.Mock);
+    await db.SaveChangesAsync(cancellationToken);
+    app.Logger.LogInformation("Updated route {Id}", persistedRoute.RouteId);
+    
+    var dto = new MockRouteDto
+    {
+        RouteId = persistedRoute.RouteId,
+        Method = persistedRoute.Method,
+        Path = persistedRoute.Path,
+        Mock = JsonSerializer.Deserialize<dynamic>(route.Mock)
+    };
+
+    return Results.Ok(dto);
+    
 });
 
 app.MapGet("/drunken-master/api/mock-routes", async (CancellationToken cancellationToken) =>
@@ -112,10 +156,11 @@ app.MapGet("/drunken-master/api/mock-routes", async (CancellationToken cancellat
 
 app.MapPost("/drunken-master/api/restart", async (CancellationToken cancellationToken) =>
 {
+    app.Logger.LogInformation("Restart called...");
     
-    string _currentProcess = Path.GetFullPath(Process.GetCurrentProcess().MainModule?.FileName ?? "Program.cs");
+    var currentProcess = Path.GetFullPath(Process.GetCurrentProcess().MainModule?.FileName ?? "Program.cs");
     app.Lifetime.StopApplication();
-    Process.Start(_currentProcess);
+    Process.Start(currentProcess);
     return await Task.FromResult(0);
 });
 

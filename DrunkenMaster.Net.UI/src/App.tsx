@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
-import { Container, Modal, Navbar, Spinner } from 'react-bootstrap'
+import { Container, Modal, Navbar, Spinner, Tab, Tabs } from 'react-bootstrap'
 import { ArrowCounterclockwise } from 'react-bootstrap-icons';
 import * as api from './network/api';
+import Config from './components/Config';
 
 function App() {
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -44,9 +45,21 @@ function App() {
           <ArrowCounterclockwise className="float-end icon-btn" onClick={handleRestart} />
         </Container>
       </Navbar>
-      <Container>
-        <MockRoutes />
+
+      <Container className="mt-3">
+        <Tabs
+          defaultActiveKey="home"
+          id="uncontrolled-content-tabs"
+          className="mb-3">
+          <Tab eventKey="home" title="Home">
+            <Config />
+          </Tab>
+          <Tab eventKey="mocks" title="Mocks">
+            <MockRoutes />
+          </Tab>
+        </Tabs>
       </Container>
+
       <Modal show={showRestartModal}
         onHide={handleCloseRestartModal}
         backdrop="static"

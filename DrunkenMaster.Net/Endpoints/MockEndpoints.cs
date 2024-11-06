@@ -3,12 +3,10 @@ using DrunkenMaster.Net.Data;
 
 namespace DrunkenMaster.Net.Endpoints;
 
-public static class ProxyEndpoints
+public static class MockEndpoints
 {
-
-    public static void RegisterProxyEndpoints(this WebApplication app, DrunkenMasterDbContext db)
+    public static void RegisterMockEndpoints(this WebApplication app, DrunkenMasterDbContext db)
     {
-        
         foreach (var route in db.MockRoutes)
         {
             app.Logger.LogInformation("Configuring {Path} ...", route.Path);
@@ -16,7 +14,6 @@ public static class ProxyEndpoints
             app.MapMethods(route.Path, new[] { route.Method.ToUpper() },
                 () => mock);
         }
-        
     }
     
 }

@@ -1,9 +1,9 @@
 import { Editor } from '@monaco-editor/react';
 import './MockRoutes.css';
 import { useState, useEffect } from "react";
-import { Button, Card, Col, Container, Form, Modal, Row, Stack } from "react-bootstrap";
+import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack } from "react-bootstrap";
 import { ArrowCounterclockwise, PencilSquare, PlusCircle } from "react-bootstrap-icons";
-import { CodeBlock, CopyBlock, dracula, monokai, obsidian, rainbow, zenburn } from "react-code-blocks";
+import { CodeBlock, obsidian } from "react-code-blocks";
 
 
 export interface IMockRoute {
@@ -18,9 +18,9 @@ export default function MockRoutes() {
     const [routes, setRoutes] = useState<IMockRoute[]>();
     const [selectedRoute, setSelectedRoute] = useState<IMockRoute>();
     const [newRoute, setNewRoute] = useState<IMockRoute>();
-
-
+    const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
     const [showEditModal, setShowEditModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
 
     const handleCloseEditModal = () => {
         setSelectedRoute(undefined);
@@ -40,6 +40,20 @@ export default function MockRoutes() {
     const handleShowCreateModal = () => {
         setNewRoute({});
         setShowCreateModal(true);
+    }
+
+    const [showRestartModal, setShowResartModal] = useState(false);
+
+    const handleCloseRestartModal = () => {
+        setShowResartModal(false);
+    }
+    const handleShowResartModal = () => {
+        setShowResartModal(true);
+        delay(5000)
+            .then(() => {
+                handleCloseRestartModal();
+                getData();
+            });
     }
 
     const handleSubmitNewRoute = async () => {
@@ -66,14 +80,13 @@ export default function MockRoutes() {
             }
 
             const json = await response.json() as IMockRoute;
-            console.info(json);
             setRoutes([
                 ...(routes as []),
                 json
             ]);
             handleCloseCreateModal();
         } catch (error) {
-            handleCloseEditModal();
+            handleCloseCreateModal();
             console.error(error);
         }
     }
@@ -110,6 +123,7 @@ export default function MockRoutes() {
     }
 
     const handleRestart = async () => {
+        handleShowResartModal();
         const url = "/drunken-master/api/restart";
         try {
             const response = await fetch(url, {
@@ -123,12 +137,7 @@ export default function MockRoutes() {
             if (!response.ok) {
                 throw new Error(`Response status: ${response.status}`);
             }
-
-            const message = await response.json();
-            console.info(message);
-
         } catch (error) {
-            handleCloseEditModal();
             console.error(error);
         }
     }
@@ -144,7 +153,11 @@ export default function MockRoutes() {
             const json = await response.json() as IMockRoute[];
             setRoutes(json);
         } catch (error) {
-            console.error(error);
+            if (error instanceof Error) {
+                setErrorMessage(error.message)
+            } else {
+                console.error(error);
+            }
         }
     }
 
@@ -159,22 +172,73 @@ export default function MockRoutes() {
         return true;
     }
 
+    function renderMethodBadge(method: string) {
+        method = method.toUpperCase();
+        let variant = "";
+        switch (method) {
+            case "GET":
+                variant = "info";
+                break;
+            case "POST":
+                variant = "success";
+                break;
+            case "PUT":
+                variant = "primary";
+                break;
+            case "PATCH":
+                variant = "warning";
+                break;
+            case "DELETE":
+                variant = "danger";
+                break;
+            default:
+                variant = "secondary";
+                break;
+        }
+        return (
+            <Badge bg={variant} className='me-3' pill>{method}</Badge>
+        )
+    }
+
+
 
     useEffect(() => {
-        getData()
-    }, []);
+        async function setErrorMessageAfterDelay() {
+            await delay(5000);
+            setErrorMessage("Well shit...");
+        }
+        if (!routes) {
+            getData();
+            setErrorMessageAfterDelay()
+        }
+    }, [routes]);
+
+
+
 
 
     return <>
-        {routes &&
-            <div>
-                <Container className='mt-3'>
-                    <Stack direction='horizontal' gap={2}>
-                        <h4>Mock Routes</h4>
-                        <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
-                        {/* <ArrowCounterclockwise className='icon-btn' onClick={handleRestart} /> */}
-                    </Stack>
-                </Container>
+        {routes ?
+            <Container className='mt-3'>
+                <Stack direction='horizontal' gap={2}>
+                    <h4>Server</h4>
+                    <ArrowCounterclockwise className='icon-btn' onClick={handleRestart} />
+                </Stack>
+                <Card>
+                    <Card.Header>
+                        <Row>
+                            <Col>
+                                <Card.Title>Configuration</Card.Title>
+                            </Col>
+                        </Row>
+                    </Card.Header>
+                    <Card.Body>
+                    </Card.Body>
+                </Card>
+                <Stack direction='horizontal' gap={2} className='mt-3'>
+                    <h4>Mock Routes</h4>
+                    <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
+                </Stack>
                 <Stack gap={3}>
                     {routes.map((route) => {
                         return (
@@ -182,7 +246,10 @@ export default function MockRoutes() {
                                 <Card.Header>
                                     <Row>
                                         <Col>
-                                            <Card.Title>{route.path}</Card.Title>
+                                            <Card.Title>
+                                                {route.method && renderMethodBadge(route.method)}
+                                                {route.path}
+                                            </Card.Title>
                                         </Col>
                                         <Col>
                                             <PencilSquare className="float-end icon-btn" onClick={() => handleShowEditModal(route)} />
@@ -190,9 +257,6 @@ export default function MockRoutes() {
                                     </Row>
                                 </Card.Header>
                                 <Card.Body>
-                                    <Card.Subtitle>
-                                        Method: {route.method?.toUpperCase()}
-                                    </Card.Subtitle>
                                     <Card.Subtitle className='mt-2'>
                                         Response:
                                     </Card.Subtitle>
@@ -209,56 +273,32 @@ export default function MockRoutes() {
                         )
                     })}
                 </Stack>
-            </div>
-
+            </Container>
+            :
+            <Container className='mt-3'>
+                <div className="d-flex justify-content-around"><p>{errorMessage}</p></div>
+                <div className="d-flex justify-content-around"><Spinner className='m-4 text-center' variant='warning' /></div>
+            </Container>
         }
-        <Modal show={showEditModal} onHide={handleCloseEditModal} fullscreen={true}>
-            <Modal.Header closeButton>
-                <Modal.Title>Edit Mock Route</Modal.Title>
-            </Modal.Header>
+        <Modal show={showRestartModal}
+            onHide={handleCloseRestartModal}
+            backdrop="static"
+            keyboard={false}
+            centered>
             <Modal.Body>
-                {selectedRoute &&
-                    <Container>
-                        <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-                            <Form.Label>HTTP Method</Form.Label>
-                            <Form.Select value={selectedRoute.method}
-                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedRoute({ ...selectedRoute, method: e.currentTarget.value })}>
-                                <option value={""}>Select...</option>
-                                <option value="Get">Get</option>
-                                <option value="Post">Post</option>
-                                <option value="Put">Put</option>
-                                <option value="Delete">Delete</option>
-                            </Form.Select>
-                        </Form.Group>
-                        <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
-                            <Form.Label>Path</Form.Label>
-                            <Form.Control type="text"
-                                placeholder="/some/path"
-                                value={selectedRoute.path}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedRoute({ ...selectedRoute, path: e.currentTarget.value })} />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Mock Response</Form.Label>
-                            <Editor
-                                theme="vs-dark"
-                                height={"500px"}
-                                defaultLanguage="json"
-                                defaultValue={JSON.stringify(selectedRoute.mock, null, 2)}
-                                onChange={(value) => setSelectedRoute({ ...selectedRoute, mock: isJsonString(value) ? JSON.parse(value as string) : selectedRoute.mock })}
-                            />
-                        </Form.Group>
-                    </Container>
-                }
-
+                <p><b>Drunken Master is restarting...</b></p>
+                <blockquote>
+                    <p className="mb-0">"Do not fight with the strength, absorb it, and it flows, use it."</p>
+                    <footer className='float-end'>- <cite title="Yip Man">Yip Man</cite></footer>
+                </blockquote>
+                <div className='p-4 mt-3'>
+                    <div className="position-absolute top-80 start-50 translate-middle">
+                        <Spinner animation="border" role="status" variant="warning">
+                            <span className="visually-hidden">Restarting...</span>
+                        </Spinner>
+                    </div>
+                </div>
             </Modal.Body>
-            <Modal.Footer>
-                <Button variant="secondary" onClick={handleCloseEditModal}>
-                    Cancel
-                </Button>
-                <Button variant="primary" onClick={handleSubmitUpdateRoute}>
-                    Submit
-                </Button>
-            </Modal.Footer>
         </Modal>
 
         <Modal show={showCreateModal} onHide={handleCloseCreateModal} fullscreen={true}>
@@ -306,11 +346,57 @@ export default function MockRoutes() {
                     Cancel
                 </Button>
                 <Button variant="primary" onClick={handleSubmitNewRoute} disabled={
-                    !newRoute
-                    || !newRoute.method
-                    || !newRoute.path
-                    || !newRoute.mock
+                    !newRoute?.method || !newRoute.path || !newRoute.mock
                 }>
+                    Submit
+                </Button>
+            </Modal.Footer>
+        </Modal>
+
+        <Modal show={showEditModal} onHide={handleCloseEditModal} fullscreen={true}>
+            <Modal.Header closeButton>
+                <Modal.Title>Edit Mock Route</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {selectedRoute &&
+                    <Container>
+                        <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                            <Form.Label>HTTP Method</Form.Label>
+                            <Form.Select value={selectedRoute.method}
+                                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedRoute({ ...selectedRoute, method: e.currentTarget.value })}>
+                                <option value={""}>Select...</option>
+                                <option value="Get">Get</option>
+                                <option value="Post">Post</option>
+                                <option value="Put">Put</option>
+                                <option value="Delete">Delete</option>
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
+                            <Form.Label>Path</Form.Label>
+                            <Form.Control type="text"
+                                placeholder="/some/path"
+                                value={selectedRoute.path}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedRoute({ ...selectedRoute, path: e.currentTarget.value })} />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mock Response</Form.Label>
+                            <Editor
+                                theme="vs-dark"
+                                height={"500px"}
+                                defaultLanguage="json"
+                                defaultValue={JSON.stringify(selectedRoute.mock, null, 2)}
+                                onChange={(value) => setSelectedRoute({ ...selectedRoute, mock: isJsonString(value) ? JSON.parse(value as string) : selectedRoute.mock })}
+                            />
+                        </Form.Group>
+                    </Container>
+                }
+
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={handleCloseEditModal}>
+                    Cancel
+                </Button>
+                <Button variant="primary" onClick={handleSubmitUpdateRoute}>
                     Submit
                 </Button>
             </Modal.Footer>

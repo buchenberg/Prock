@@ -60,6 +60,11 @@ var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.Fro
 
 app.UseRouting();
 
+app.MapGet("/drunken-master/api/config", async (CancellationToken cancellationToken) =>
+{
+    return Results.Ok(new { connectionString, upstreamUrl, host, port });
+});
+
 app.Map("/{**catch-all}", async (HttpContext httpContext, IHttpForwarder forwarder) =>
 {
     var error = await forwarder.SendAsync(httpContext, upstreamUrl,

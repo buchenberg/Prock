@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack } from "react-bootstrap";
 import { ArrowCounterclockwise, PencilSquare, PlusCircle } from "react-bootstrap-icons";
 import { CodeBlock, obsidian } from "react-code-blocks";
+import * as api from '../network/api';
 
 
 export interface IMockRoute {
@@ -13,9 +14,17 @@ export interface IMockRoute {
     mock?: object;
 }
 
+export interface IServerConfig {
+    "connectionString": string;
+    "upstreamUrl": string;
+    "host": string;
+    "port": string;
+}
+
 export default function MockRoutes() {
 
     const [routes, setRoutes] = useState<IMockRoute[]>();
+    const [serverConfig, setServerConfig] = useState<IServerConfig>();
     const [selectedRoute, setSelectedRoute] = useState<IMockRoute>();
     const [newRoute, setNewRoute] = useState<IMockRoute>();
     const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -52,7 +61,7 @@ export default function MockRoutes() {
         delay(5000)
             .then(() => {
                 handleCloseRestartModal();
-                getData();
+                getRoutes();
             });
     }
 
@@ -87,7 +96,11 @@ export default function MockRoutes() {
             handleCloseCreateModal();
         } catch (error) {
             handleCloseCreateModal();
-            console.error(error);
+            if (error instanceof Error) {
+                setErrorMessage(error.message);
+            } else {
+                console.error(error);
+            }
         }
     }
 
@@ -118,34 +131,33 @@ export default function MockRoutes() {
             handleCloseEditModal();
         } catch (error) {
             handleCloseEditModal();
-            console.error(error);
+            if (error instanceof Error) {
+                setErrorMessage(error.message);
+            } else {
+                console.error(error);
+            }
         }
     }
 
     const handleRestart = async () => {
         handleShowResartModal();
-        const url = "/drunken-master/api/restart";
         try {
-            const response = await fetch(url, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                }
-            });
+            const response = await api.restartAsync();
             if (!response.ok) {
                 throw new Error(`Response status: ${response.status}`);
             }
         } catch (error) {
-            console.error(error);
+            if (error instanceof Error) {
+                setErrorMessage(error.message);
+            } else {
+                console.error(error);
+            }
         }
     }
 
-    async function getData() {
-        const url = "/drunken-master/api/mock-routes";
+    const getRoutes = async () => {
         try {
-            const response = await fetch(url, { mode: 'cors' });
+            const response = await api.fetchRoutesAsync();
             if (!response.ok) {
                 throw new Error(`Response status: ${response.status}`);
             }
@@ -154,7 +166,24 @@ export default function MockRoutes() {
             setRoutes(json);
         } catch (error) {
             if (error instanceof Error) {
-                setErrorMessage(error.message)
+                setErrorMessage(error.message);
+            } else {
+                console.error(error);
+            }
+        }
+    }
+
+    const getServerConfig = async () => {
+        try {
+            const response = await api.fetchServerConfigAsync();
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+            const json = await response.json() as IServerConfig;
+            setServerConfig(json);
+        } catch (error) {
+            if (error instanceof Error) {
+                setErrorMessage(error.message);
             } else {
                 console.error(error);
             }
@@ -200,45 +229,64 @@ export default function MockRoutes() {
         )
     }
 
-
-
     useEffect(() => {
-        async function setErrorMessageAfterDelay() {
-            await delay(5000);
-            setErrorMessage("Well shit...");
-        }
         if (!routes) {
-            getData();
-            setErrorMessageAfterDelay()
+            getRoutes();
         }
-    }, [routes]);
-
-
+        if (!serverConfig) {
+            getServerConfig();
+        }
+    }, [routes, serverConfig]);
 
 
 
     return <>
         {routes ?
             <Container className='mt-3'>
-                <Stack direction='horizontal' gap={2}>
-                    <h4>Server</h4>
-                    <ArrowCounterclockwise className='icon-btn' onClick={handleRestart} />
-                </Stack>
+                <div className='mb-3'>
+                    <Stack direction='horizontal' gap={2} >
+                        <h4>Server</h4>
+                    </Stack>
+                </div>
                 <Card>
                     <Card.Header>
                         <Row>
                             <Col>
                                 <Card.Title>Configuration</Card.Title>
                             </Col>
+                            <Col>
+                                <ArrowCounterclockwise className="float-end icon-btn" onClick={handleRestart} />
+                            </Col>
                         </Row>
                     </Card.Header>
                     <Card.Body>
+                        <Row>
+                            <Col><b>Host</b></Col>
+                            <Col>{serverConfig?.host ?? ""}</Col>
+                        </Row>
+                        <hr />
+                        <Row>
+                            <Col><b>Port</b></Col>
+                            <Col>{serverConfig?.port ?? ""}</Col>
+                        </Row>
+                        <hr />
+                        <Row>
+                            <Col><b>Upstream URL</b></Col>
+                            <Col>{serverConfig?.upstreamUrl ?? ""}</Col>
+                        </Row>
+                        <hr />
+                        <Row>
+                            <Col><b>MongoDb Connection String</b></Col>
+                            <Col>{serverConfig?.connectionString ?? ""}</Col>
+                        </Row>
                     </Card.Body>
                 </Card>
-                <Stack direction='horizontal' gap={2} className='mt-3'>
-                    <h4>Mock Routes</h4>
-                    <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
-                </Stack>
+                <div className='mb-3'>
+                    <Stack direction='horizontal' gap={2} className='mt-3'>
+                        <h4>Mock Routes</h4>
+                        <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
+                    </Stack>
+                </div>
                 <Stack gap={3}>
                     {routes.map((route) => {
                         return (

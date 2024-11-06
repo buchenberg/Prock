@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
-import { Badge, Container, Modal, Navbar, Spinner, Tab, Tabs } from 'react-bootstrap'
+import { Badge, Container, Modal, Navbar, Spinner, Stack, Tab, Tabs } from 'react-bootstrap'
 import { ArrowCounterclockwise } from 'react-bootstrap-icons';
 import * as api from './network/api';
 import Config from './components/Config';
@@ -41,8 +41,8 @@ function App() {
     <>
       <Navbar data-bs-theme="dark" className="bg-body-tertiary" expand="lg">
         <Container>
-          <Navbar.Brand href="#home">Drunken Master Dotnet <sup><Badge pill bg="dark"><small>v 0.1 alfalfa</small></Badge></sup></Navbar.Brand>
-          <ArrowCounterclockwise className="float-end icon-btn" onClick={handleRestart} />
+          <Navbar.Brand href="#home">Drunken Master .NET <sup><Badge pill bg="dark"><small>v 0.1 alfalfa</small></Badge></sup></Navbar.Brand>
+          <Stack direction='horizontal' gap={2}><ArrowCounterclockwise className="float-end icon-btn" onClick={handleRestart} /><span>Restart Service</span></Stack>
         </Container>
       </Navbar>
 
@@ -52,10 +52,14 @@ function App() {
           id="uncontrolled-content-tabs"
           className="mb-3">
           <Tab eventKey="home" title="Home">
-            <Config />
+            <Container className='mt-3'>
+              <Config />
+            </Container>
           </Tab>
           <Tab eventKey="mocks" title="Mocks">
-            <MockRoutes />
+            <Container className='mt-3'>
+              <MockRoutes />
+            </Container>
           </Tab>
         </Tabs>
       </Container>

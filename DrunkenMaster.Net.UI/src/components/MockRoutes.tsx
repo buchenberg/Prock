@@ -181,7 +181,7 @@ export default function MockRoutes() {
 
     return <>
         {routes ?
-            <Container className='mt-3'>
+            <>
                 <div className='mb-3'>
                     <Stack direction='horizontal' gap={2} className='mt-3'>
                         <h4>Mock Routes</h4>
@@ -222,12 +222,12 @@ export default function MockRoutes() {
                         )
                     })}
                 </Stack>
-            </Container>
+            </>
             :
-            <Container className='mt-3'>
+            <>
                 <div className="d-flex justify-content-around"><p>{errorMessage}</p></div>
                 <div className="d-flex justify-content-around"><Spinner className='m-4 text-center' variant='warning' /></div>
-            </Container>
+            </>
         }
         <Modal show={showCreateModal} onHide={handleCloseCreateModal} fullscreen={true}>
             <Modal.Header closeButton>

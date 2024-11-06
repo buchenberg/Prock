@@ -2,7 +2,7 @@ import { Editor } from '@monaco-editor/react';
 import './MockRoutes.css';
 import { useState, useEffect } from "react";
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack } from "react-bootstrap";
-import { ArrowCounterclockwise, PencilSquare, PlusCircle } from "react-bootstrap-icons";
+import { PencilSquare, PlusCircle } from "react-bootstrap-icons";
 import { CodeBlock, obsidian } from "react-code-blocks";
 import * as api from '../network/api';
 
@@ -49,20 +49,6 @@ export default function MockRoutes() {
     const handleShowCreateModal = () => {
         setNewRoute({});
         setShowCreateModal(true);
-    }
-
-    const [showRestartModal, setShowResartModal] = useState(false);
-
-    const handleCloseRestartModal = () => {
-        setShowResartModal(false);
-    }
-    const handleShowResartModal = () => {
-        setShowResartModal(true);
-        delay(5000)
-            .then(() => {
-                handleCloseRestartModal();
-                getRoutes();
-            });
     }
 
     const handleSubmitNewRoute = async () => {
@@ -131,22 +117,6 @@ export default function MockRoutes() {
             handleCloseEditModal();
         } catch (error) {
             handleCloseEditModal();
-            if (error instanceof Error) {
-                setErrorMessage(error.message);
-            } else {
-                console.error(error);
-            }
-        }
-    }
-
-    const handleRestart = async () => {
-        handleShowResartModal();
-        try {
-            const response = await api.restartAsync();
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
-            }
-        } catch (error) {
             if (error instanceof Error) {
                 setErrorMessage(error.message);
             } else {
@@ -245,41 +215,29 @@ export default function MockRoutes() {
             <Container className='mt-3'>
                 <div className='mb-3'>
                     <Stack direction='horizontal' gap={2} >
-                        <h4>Server</h4>
+                        <h4>Server Configuration</h4>
                     </Stack>
                 </div>
-                <Card>
-                    <Card.Header>
-                        <Row>
-                            <Col>
-                                <Card.Title>Configuration</Card.Title>
-                            </Col>
-                            <Col>
-                                <ArrowCounterclockwise className="float-end icon-btn" onClick={handleRestart} />
-                            </Col>
-                        </Row>
-                    </Card.Header>
-                    <Card.Body>
-                        <Row>
-                            <Col><b>Host</b></Col>
-                            <Col>{serverConfig?.host ?? ""}</Col>
-                        </Row>
-                        <hr />
-                        <Row>
-                            <Col><b>Port</b></Col>
-                            <Col>{serverConfig?.port ?? ""}</Col>
-                        </Row>
-                        <hr />
-                        <Row>
-                            <Col><b>Upstream URL</b></Col>
-                            <Col>{serverConfig?.upstreamUrl ?? ""}</Col>
-                        </Row>
-                        <hr />
-                        <Row>
-                            <Col><b>MongoDb Connection String</b></Col>
-                            <Col>{serverConfig?.connectionString ?? ""}</Col>
-                        </Row>
-                    </Card.Body>
+                <Card body>
+                    <Row>
+                        <Col><b>Host</b></Col>
+                        <Col>{serverConfig?.host ?? ""}</Col>
+                    </Row>
+                    <hr />
+                    <Row>
+                        <Col><b>Port</b></Col>
+                        <Col>{serverConfig?.port ?? ""}</Col>
+                    </Row>
+                    <hr />
+                    <Row>
+                        <Col><b>Upstream URL</b></Col>
+                        <Col>{serverConfig?.upstreamUrl ?? ""}</Col>
+                    </Row>
+                    <hr />
+                    <Row>
+                        <Col><b>MongoDb Connection String</b></Col>
+                        <Col>{serverConfig?.connectionString ?? ""}</Col>
+                    </Row>
                 </Card>
                 <div className='mb-3'>
                     <Stack direction='horizontal' gap={2} className='mt-3'>
@@ -328,27 +286,6 @@ export default function MockRoutes() {
                 <div className="d-flex justify-content-around"><Spinner className='m-4 text-center' variant='warning' /></div>
             </Container>
         }
-        <Modal show={showRestartModal}
-            onHide={handleCloseRestartModal}
-            backdrop="static"
-            keyboard={false}
-            centered>
-            <Modal.Body>
-                <p><b>Drunken Master is restarting...</b></p>
-                <blockquote>
-                    <p className="mb-0">"Do not fight with the strength, absorb it, and it flows, use it."</p>
-                    <footer className='float-end'>- <cite title="Yip Man">Yip Man</cite></footer>
-                </blockquote>
-                <div className='p-4 mt-3'>
-                    <div className="position-absolute top-80 start-50 translate-middle">
-                        <Spinner animation="border" role="status" variant="warning">
-                            <span className="visually-hidden">Restarting...</span>
-                        </Spinner>
-                    </div>
-                </div>
-            </Modal.Body>
-        </Modal>
-
         <Modal show={showCreateModal} onHide={handleCloseCreateModal} fullscreen={true}>
             <Modal.Header closeButton>
                 <Modal.Title>Add Route</Modal.Title>
@@ -400,7 +337,6 @@ export default function MockRoutes() {
                 </Button>
             </Modal.Footer>
         </Modal>
-
         <Modal show={showEditModal} onHide={handleCloseEditModal} fullscreen={true}>
             <Modal.Header closeButton>
                 <Modal.Title>Edit Mock Route</Modal.Title>

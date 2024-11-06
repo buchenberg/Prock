@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
-import { Container, Modal, Navbar, Spinner, Tab, Tabs } from 'react-bootstrap'
+import { Badge, Container, Modal, Navbar, Spinner, Tab, Tabs } from 'react-bootstrap'
 import { ArrowCounterclockwise } from 'react-bootstrap-icons';
 import * as api from './network/api';
 import Config from './components/Config';
@@ -41,7 +41,7 @@ function App() {
     <>
       <Navbar data-bs-theme="dark" className="bg-body-tertiary" expand="lg">
         <Container>
-          <Navbar.Brand href="#home">Drunken Master</Navbar.Brand>
+          <Navbar.Brand href="#home">Drunken Master Dotnet <sup><Badge pill bg="dark"><small>v 0.1 alfalfa</small></Badge></sup></Navbar.Brand>
           <ArrowCounterclockwise className="float-end icon-btn" onClick={handleRestart} />
         </Container>
       </Navbar>

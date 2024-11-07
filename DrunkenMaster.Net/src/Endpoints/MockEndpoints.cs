@@ -1,0 +1,20 @@
+﻿using System.Text.Json;
+using DrunkenMaster.Net.Data;
+
+namespace DrunkenMaster.Net.Endpoints;
+
+public static class MockEndpoints
+{
+    public static void RegisterMockEndpoints(this WebApplication app, DrunkenMasterDbContext db)
+    {
+        //TODO: DERP - This should get the mock response in real time
+        foreach (var route in db.MockRoutes)
+        {
+            app.Logger.LogInformation("Configuring {Path} ...", route.Path);
+            var mock = JsonSerializer.Deserialize<dynamic>(route.Mock);
+            app.MapMethods(route.Path, new[] { route.Method.ToUpper() },
+                () => mock);
+        }
+    }
+    
+}

@@ -1,0 +1,38 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+version: '3.4'
+services:
+  drunkenmasternet:
+    image: drunkenmasternet
+    environment:
+      - CONN_STR=mongodb://user:pass@mongodb
+    build:
+      context: .
+      dockerfile: ./.docker/Dockerfile
+    ports:
+      - 5001:5001
+    depends_on:
+      - mongodb
+    networks:
+      - mongo_net
+  mongodb:
+    image: mongodb/mongodb-community-server:6.0.15-ubi9
+    restart: always
+    environment:
+      - MONGODB_INITDB_ROOT_USERNAME=user
+      - MONGODB_INITDB_ROOT_PASSWORD=pass
+    volumes:
+      # seeding scripts
+      - ./.docker/mongo-entrypoint:/docker-entrypoint-initdb.d
+      # named volumes
+      - mongodb:/data/db
+      - mongoconfig:/data/configdb
+    networks:
+      - mongo_net
+volumes:
+  # default dir on Ubuntu: /var/lib/docker/volumes
+  mongodb:
+  mongoconfig:
+networks:
+  mongo_net:
+    driver: bridge

@@ -2,6 +2,7 @@
 using System.Text.Json;
 using DrunkenMaster.Net.Data;
 using DrunkenMaster.Net.Data.Dto;
+using DrunkenMaster.Net.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +10,9 @@ namespace DrunkenMaster.Net.Endpoints;
 
 public static class DrunkenMasterEndpoints
 {
-    public static void RegisterDrunkenMasterEndpoints(this WebApplication app, DrunkenMasterDbContext db)
+    private static readonly string[] HttpMethods = new[] { "Get", "Put", "Post", "Patch", "Delete" };
+
+    public static void RegisterDrunkenMasterEndpoints(this WebApplication app)
     {
         var connectionString = app.Configuration.GetSection("DrunkenMaster").GetSection("MongoDbUri").Value ??
                                "mongodb://localhost:27017/";
@@ -20,103 +23,150 @@ public static class DrunkenMasterEndpoints
 
         app.MapGet("/drunken-master/api/config", () => Results.Ok(new { connectionString, upstreamUrl, host, port }));
 
-        app.MapGet("/drunken-master/api/mock-routes", async Task<Results<Ok<List<MockRouteDto>>, Ok>> () =>
+        app.MapGet("/drunken-master/api/mock-routes", async Task<Results<Ok<List<MockRouteDto>>, Ok>> (DrunkenMasterDbContext db) =>
             await db.MockRoutes.ToListAsync() is List<MockRoute> response
                 ? TypedResults.Ok(response.Select(x => new MockRouteDto()
                     {
                         RouteId = x.RouteId,
                         Method = x.Method,
                         Path = x.Path,
-                        Mock = JsonSerializer.Deserialize<dynamic>(x.Mock)
+                        Mock = JsonSerializer.Deserialize<dynamic>(x.Mock),
+                        Enabled = x.Enabled
                     }).ToList()
                 )
                 : TypedResults.Ok());
 
         app.MapGet("/drunken-master/api/mock-routes/{routeId}",
-            async Task<Results<Ok<MockRouteDto>, NotFound>> (Guid routeId) =>
+            async Task<Results<Ok<MockRouteDto>, NotFound>> (Guid routeId, DrunkenMasterDbContext db) =>
                 await db.MockRoutes.SingleOrDefaultAsync(x => x.RouteId == routeId) is MockRoute response
                     ? TypedResults.Ok(new MockRouteDto()
                     {
                         RouteId = response.RouteId,
                         Method = response.Method,
                         Path = response.Path,
-                        Mock = JsonSerializer.Deserialize<dynamic>(response.Mock)
+                        Mock = JsonSerializer.Deserialize<dynamic>(response.Mock),
+                        Enabled = response.Enabled
                     })
                     : TypedResults.NotFound());
 
         app.MapPost("/drunken-master/api/mock-routes",
-            async (MockRouteDto route, CancellationToken cancellationToken) =>
+            async (MockRouteDto route, DrunkenMasterDbContext db, CancellationToken cancellationToken) =>
+        {
+            var methods = new[]
             {
-                var methods = new[]
-                {
-                    "Get", "Put", "Post", "Patch", "Delete"
-                };
-                if (methods.All(x => x != route.Method))
-                {
-                    return Results.BadRequest($"{route.Method} is not a valid HTTP method");
-                }
-
-                var result = new MockRoute
-                {
-                    RouteId = Guid.NewGuid(),
-                    Method = route.Method,
-                    Path = route.Path,
-                    Mock = JsonSerializer.Serialize(route.Mock)
-                };
-                app.Logger.LogInformation("Adding {Path} ...", route.Path);
-                db.MockRoutes.Add(result);
-                await db.SaveChangesAsync(cancellationToken);
-                app.Logger.LogInformation("Saved {Path} as {Id}", result.Path, result.RouteId);
-                var dto = new MockRouteDto
-                {
-                    RouteId = result.RouteId,
-                    Method = result.Method,
-                    Path = result.Path,
-                    Mock = JsonSerializer.Deserialize<dynamic>(route.Mock)
-                };
-
-                return TypedResults.Created($"/drunken-master/api/mock-routes/{result.RouteId}", dto);
-            });
-
-        app.MapPut("/drunken-master/api/mock-routes",
-            async Task<Results<Ok<MockRouteDto>, BadRequest<string>>> (MockRouteDto route,
-                CancellationToken cancellationToken) =>
+                "Get", "Put", "Post", "Patch", "Delete"
+            };
+            if (methods.All(x => x != route.Method))
             {
-                var methods = new[]
-                {
-                    "Get", "Put", "Post", "Patch", "Delete"
-                };
-                if (methods.All(x => x != route.Method))
-                {
-                    return TypedResults.BadRequest($"{route.Method} is not a valid HTTP method");
-                }
+                return Results.BadRequest($"{route.Method} is not a valid HTTP method");
+            }
 
+            var result = new MockRoute
+            {
+                RouteId = Guid.NewGuid(),
+                Method = route.Method,
+                Path = route.Path,
+                Mock = JsonSerializer.Serialize(route.Mock),
+                Enabled = true
+            };
+            
+            app.Logger.LogInformation("Adding {Path} ...", route.Path);
+            db.MockRoutes.Add(result);
+            await db.SaveChangesAsync(cancellationToken);
+            
+            app.Logger.LogInformation("Saved {Path} as {Id}", result.Path, result.RouteId);
 
-                app.Logger.LogInformation("Updating {Path} ...", route.Path);
-                var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == route.RouteId);
+            route.RouteId = result.RouteId;
+
+            return TypedResults.Created($"/drunken-master/api/mock-routes/{result.RouteId}", route);
+        });
+        
+        app.MapPut("/drunken-master/api/mock-routes/{routId:Guid}/disable-route",
+            async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, DrunkenMasterDbContext db, CancellationToken cancellationToken) =>
+        {
+
+            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
+            
+            if (persistedRoute == null)
+            {
+                return TypedResults.NotFound(routeId);
+            }
+            
+            persistedRoute.Enabled = false;
+
+            await db.SaveChangesAsync(cancellationToken);
+        
+            app.Logger.LogInformation("Disabled route {Id}", persistedRoute.RouteId);
+            
+            var response = new MockRouteDto
+            {
+                RouteId = persistedRoute.RouteId,
+                Method = persistedRoute.Method,
+                Path = persistedRoute.Path,
+                Mock = JsonSerializer.Serialize(persistedRoute.Mock),
+                Enabled = persistedRoute.Enabled
+            };
+
+            return TypedResults.Ok(response);
+        });
+        
+        app.MapPut("/drunken-master/api/mock-routes/{routId:Guid}/enable-route",
+            async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, DrunkenMasterDbContext db, CancellationToken cancellationToken) =>
+            {
+
+                var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
+            
                 if (persistedRoute == null)
                 {
-                    return TypedResults.BadRequest($"Route {route.RouteId} not found");
+                    return TypedResults.NotFound(routeId);
                 }
+            
+                persistedRoute.Enabled = true;
 
-                persistedRoute.Path = route.Path;
-                persistedRoute.Method = route.Method;
-                persistedRoute.Mock = JsonSerializer.Serialize(route.Mock);
                 await db.SaveChangesAsync(cancellationToken);
-                app.Logger.LogInformation("Updated route {Id}", persistedRoute.RouteId);
-
-                var dto = new MockRouteDto
+        
+                app.Logger.LogInformation("Disabled route {Id}", persistedRoute.RouteId);
+            
+                var response = new MockRouteDto
                 {
                     RouteId = persistedRoute.RouteId,
                     Method = persistedRoute.Method,
                     Path = persistedRoute.Path,
-                    Mock = JsonSerializer.Deserialize<dynamic>(route.Mock)
+                    Mock = JsonSerializer.Serialize(persistedRoute.Mock),
+                    Enabled = persistedRoute.Enabled
                 };
 
-                return TypedResults.Ok(dto);
+                return TypedResults.Ok(response);
             });
 
-        app.MapDelete("/drunken-master/api/mock-routes/{routeId}", async Task<Results<Ok, NotFound>> (Guid routeId) =>
+        app.MapPut("/drunken-master/api/mock-routes", async Task<Results<Ok<MockRouteDto>, BadRequest<string>>> (MockRouteDto route, DrunkenMasterDbContext db, CancellationToken cancellationToken) =>
+        {
+            
+            if (HttpMethods.All(x => x != route.Method))
+            {
+                return TypedResults.BadRequest($"{route.Method} is not a valid HTTP method");
+            }
+
+
+            app.Logger.LogInformation("Updating {Path} ...", route.Path);
+            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == route.RouteId);
+            if (persistedRoute == null)
+            {
+                return TypedResults.BadRequest($"Route {route.RouteId} not found");
+            }
+
+            persistedRoute.Path = route.Path;
+            persistedRoute.Method = route.Method;
+            persistedRoute.Mock = JsonSerializer.Serialize(route.Mock);
+            
+            await db.SaveChangesAsync(cancellationToken);
+            
+            app.Logger.LogInformation("Updated route {Id}", persistedRoute.RouteId);
+
+            return TypedResults.Ok(route);
+        });
+
+        app.MapDelete("/drunken-master/api/mock-routes/{routeId}", async Task<Results<Ok, NotFound>> (Guid routeId, DrunkenMasterDbContext db) =>
         {
             var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
             if (persistedRoute == null)

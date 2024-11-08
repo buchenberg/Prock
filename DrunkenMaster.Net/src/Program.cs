@@ -1,26 +1,51 @@
+using System.Diagnostics;
+using System.Net;
 using DrunkenMaster.Net.Data;
 using DrunkenMaster.Net.Endpoints;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
+using Yarp.ReverseProxy.Forwarder;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetSection("DrunkenMaster:MongoDbUri").Value ?? "mongodb://localhost:27017/";
+var host = builder.Configuration.GetSection("DrunkenMaster:Host").Value ?? "http://localhost";
+var port = builder.Configuration.GetSection("DrunkenMaster:Port").Value ?? "5001";
+var dbName = builder.Configuration.GetSection("DrunkenMaster:DbName").Value ?? "drunken-master";
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Services.AddHttpForwarder();
+builder.Services.AddSignalR();
+builder.Services.AddCors();
+builder.Services.AddDbContext<DrunkenMasterDbContext>(options => options.UseMongoDB(new MongoClient(connectionString), dbName));
+builder.Services.AddSingleton(new HttpMessageInvoker(new SocketsHttpHandler
+{
+    UseProxy = false,
+    AllowAutoRedirect = false,
+    AutomaticDecompression = DecompressionMethods.None,
+    UseCookies = false,
+    EnableMultipleHttp2Connections = true,
+    ActivityHeadersPropagator = new ReverseProxyPropagator(DistributedContextPropagator.Current),
+    ConnectTimeout = TimeSpan.FromSeconds(15),
+}));
+
 
 var app = builder.Build();
 
-var connectionString = "mongodb://localhost:27017/";
-//"https://gbuchenberger.na1.sa.allcovered.com";// Environment.GetEnvironmentVariable("CONN_STR") ?? "mongodb://user:pass@mongodb";//app.Configuration.GetSection("DrunkenMaster").GetSection("MongoDbUri").Value ?? "mongodb:mongodb";
-var client = new MongoClient(connectionString);
-var db = DrunkenMasterDbContext.Create(client.GetDatabase("drunken-master"));
+
+
+app.UseCors(options =>
+{
+    options.AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()
+        .SetIsOriginAllowed(origin => true);
+});
 
 app.UseRouting();
+app.MapHub<NotificationHub>("/signalr");
+app.RegisterDrunkenMasterEndpoints();
 app.RegisterProxyEndpoints();
-app.RegisterMockEndpoints(db);
-app.RegisterDrunkenMasterEndpoints(db);
 
-var host = app.Configuration.GetSection("DrunkenMaster").GetSection("Host").Value ?? "http://localhost";
-var port = app.Configuration.GetSection("DrunkenMaster").GetSection("Port").Value ?? "5001";
 
-app.Run("http://localhost:5001");
+app.Run($"{host}:{port}");

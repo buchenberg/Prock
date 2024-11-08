@@ -1,14 +1,28 @@
-import { useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
 import { Badge, Container, Modal, Navbar, Spinner, Stack, Tab, Tabs } from 'react-bootstrap'
 import { ArrowCounterclockwise } from 'react-bootstrap-icons';
 import * as api from './network/api';
 import Config from './components/Config';
+import { HubConnectionBuilder } from '@microsoft/signalr';
+import Terminal, { ColorMode, TerminalOutput } from 'react-terminal-ui';
 
 function App() {
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
   const [showRestartModal, setShowResartModal] = useState(false);
+  const [terminalLineData, setTerminalLineData] = useState<ReactNode[]>([]);
+
+  useEffect(() => {
+    const connection = new HubConnectionBuilder()
+      .withUrl("http://localhost:5001/signalr")
+      .build();
+
+    connection.start();
+    connection.on("ProxyRequest", data => {
+      setTerminalLineData((prev) => [...prev, <TerminalOutput>{data}</TerminalOutput>])
+    });
+  }, [terminalLineData])
 
   const handleCloseRestartModal = () => {
     setShowResartModal(false);
@@ -59,6 +73,17 @@ function App() {
           <Tab eventKey="mocks" title="Mocks">
             <Container className='mt-3'>
               <MockRoutes />
+            </Container>
+          </Tab>
+          <Tab eventKey="signals" title="Signals">
+            <Container className='mt-3'>
+
+              <Container>
+                <Terminal name='Proxy Requests' colorMode={ColorMode.Dark} onInput={terminalInput => console.log(`New terminal input received: '${terminalInput}'`)}>
+                  {terminalLineData}
+                </Terminal>
+              </Container>
+
             </Container>
           </Tab>
         </Tabs>

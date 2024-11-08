@@ -1,7 +1,7 @@
 ﻿using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace DrunkenMaster.Net;
+namespace DrunkenMaster.Net.Data.Entities;
 
 public class MockRoute
 {
@@ -16,4 +16,6 @@ public class MockRoute
     public string Path { get; set; }
     [BsonElement("mock")]
     public string Mock { get; set; }
+    [BsonElement("enabled")]
+    public bool Enabled { get; set; }
 }

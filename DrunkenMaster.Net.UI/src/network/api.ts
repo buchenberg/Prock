@@ -1,5 +1,5 @@
 export const restartAsync = () => {
-    return fetch("/drunken-master/api/restart", {
+    return fetch("http://localhost:5001/drunken-master/api/restart", {
         method: 'POST',
         mode: 'cors',
         headers: {
@@ -10,8 +10,8 @@ export const restartAsync = () => {
 }
 
 export const fetchRoutesAsync = () => {
-    return fetch("/drunken-master/api/mock-routes", { mode: 'cors' });
+    return fetch("http://localhost:5001/drunken-master/api/mock-routes", { mode: 'cors' });
 }
 export const fetchServerConfigAsync = () => {
-    return fetch("/drunken-master/api/config", { mode: 'cors' });
+    return fetch("http://localhost:5001/drunken-master/api/config", { mode: 'cors' });
 }

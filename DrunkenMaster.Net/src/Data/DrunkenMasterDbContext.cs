@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DrunkenMaster.Net.Data.Entities;
+using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using MongoDB.EntityFrameworkCore.Extensions;
 
@@ -20,4 +21,5 @@ public class DrunkenMasterDbContext : DbContext
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<MockRoute>().ToCollection("mockRoutes");
     }
+    
 }

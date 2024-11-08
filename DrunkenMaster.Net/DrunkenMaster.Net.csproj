@@ -13,4 +13,9 @@
     <PackageReference Include="Yarp.ReverseProxy" Version="2.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include=".docker\Dockerfile" />
+    <Content Include=".docker\mongo-entrypoint\init-users.sh" />
+  </ItemGroup>
+
 </Project>

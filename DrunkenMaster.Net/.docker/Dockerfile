@@ -18,7 +18,7 @@ RUN dotnet publish "DrunkenMaster.Net.csproj" -c $configuration -o /app/publish 
 
 FROM base AS final
 WORKDIR /app
-EXPOSE 5001
-ENV ASPNETCORE_URLS=http://*:5001
+EXPOSE 5001 80 443
 COPY --from=publish /app/publish .
+ADD ./appsettings.Docker.json ./appsettings.json
 ENTRYPOINT ["dotnet", "DrunkenMaster.Net.dll"]

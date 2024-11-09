@@ -1,5 +1,7 @@
+import { IMockRoute } from "../components/MockRoutes";
+
 export const restartAsync = () => {
-    return fetch("http://localhost:5001/drunken-master/api/restart", {
+    return fetch("/drunken-master/api/restart", {
         method: 'POST',
         mode: 'cors',
         headers: {
@@ -8,10 +10,31 @@ export const restartAsync = () => {
         }
     });
 }
-
 export const fetchRoutesAsync = () => {
-    return fetch("http://localhost:5001/drunken-master/api/mock-routes", { mode: 'cors' });
+    return fetch("/drunken-master/api/mock-routes", { mode: 'cors' });
 }
 export const fetchServerConfigAsync = () => {
-    return fetch("http://localhost:5001/drunken-master/api/config", { mode: 'cors' });
+    return fetch("/drunken-master/api/config", { mode: 'cors' });
+}
+export const createNewRoute = (newRoute: IMockRoute) => {
+    return fetch("/drunken-master/api/mock-routes", {
+        method: "POST",
+        mode: 'cors',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newRoute)
+    });
+}
+export const updateRoute = (newRoute: IMockRoute) => {
+    return fetch("/drunken-master/api/mock-routes", {
+        method: "PUT",
+        mode: 'cors',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newRoute)
+    });
 }

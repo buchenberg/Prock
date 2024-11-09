@@ -47,18 +47,8 @@ export default function MockRoutes() {
             return;
         }
 
-
-        const url = "/drunken-master/api/mock-routes";
         try {
-            const response = await fetch(url, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(newRoute)
-            });
+            const response = await api.createNewRoute(newRoute);
             if (!response.ok) {
                 throw new Error(`Response status: ${response.status}`);
             }
@@ -85,17 +75,8 @@ export default function MockRoutes() {
             console.error("no new mock to submit!");
             return;
         }
-        const url = "/drunken-master/api/mock-routes";
         try {
-            const response = await fetch(url, {
-                method: 'PUT',
-                mode: 'cors',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(selectedRoute)
-            });
+            const response = await api.updateRoute(selectedRoute);
             if (!response.ok) {
                 throw new Error(`Response status: ${response.status}`);
             }

@@ -15,17 +15,7 @@ public static class ProxyEndpoints
 {
     public static void RegisterProxyEndpoints(this WebApplication app)
     {
-        // var httpClient = new HttpMessageInvoker(new SocketsHttpHandler
-        // {
-        //     UseProxy = false,
-        //     AllowAutoRedirect = false,
-        //     AutomaticDecompression = DecompressionMethods.None,
-        //     UseCookies = false,
-        //     EnableMultipleHttp2Connections = true,
-        //     ActivityHeadersPropagator = new ReverseProxyPropagator(DistributedContextPropagator.Current),
-        //     ConnectTimeout = TimeSpan.FromSeconds(15),
-        // });
-        
+
         app.Map("/{**catch-all}", async (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, DrunkenMasterDbContext db, HttpMessageInvoker httpClient) =>
         {
             var requestPath = httpContext.Request.Path.Value;
@@ -38,13 +28,20 @@ public static class ProxyEndpoints
                 var mockResponse = JsonSerializer.Deserialize<dynamic>(mock.Mock);
                 return Results.Ok(mockResponse);
             }
-            
+
             await hub.Clients.All.SendAsync("ProxyRequest", $"Proxy: {requestPath}");
             var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(100) };
             var upstreamUrl = app.Configuration.GetSection("DrunkenMaster").GetSection("UpstreamUrl").Value ?? "https://example.com";
 
-            return await forwarder.SendAsync(httpContext, upstreamUrl, httpClient, requestOptions, HttpTransformer.Default);
-
+            var error = await forwarder.SendAsync(httpContext, upstreamUrl, httpClient, requestOptions, HttpTransformer.Default);
+            if (error != ForwarderError.None)
+            {
+                var errorFeature = httpContext.GetForwarderErrorFeature();
+                var exception = errorFeature?.Exception;
+                app.Logger.LogError("Forwarding error: {@Exception}", exception);
+            }
+            
+            return Task.CompletedTask;
 
         });
 

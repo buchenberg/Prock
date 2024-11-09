@@ -1,6 +1,7 @@
 services:
-  drunkenmasternet:
-    image: drunkenmasternet
+  api:
+    image: drunkenmaster-api
+    restart: always
     environment:
       - MONGODB_CONNECTION_STRING=mongodb://user:pass@mongodb
       - ASPNETCORE_ENVIRONMENT=Docker
@@ -14,16 +15,24 @@ services:
     depends_on:
       - mongodb
     networks:
-      - main
-  drunkenmasternet-ui:
+      main:
+        aliases:
+          - api
+  ui:
     image: drunkenmasternet-ui
     build:
       context: ./DrunkenMaster.Net.UI/
       dockerfile: ./.docker/Dockerfile
     ports:
       - 8080:80
+    links:
+      - api:api
+    depends_on:
+      - api
     networks:
-      - main
+      main:
+        aliases:
+          - ui
   mongodb:
     image: mongodb/mongodb-community-server:6.0.15-ubi9
     restart: always
@@ -37,9 +46,10 @@ services:
       - mongodb:/data/db
       - mongoconfig:/data/configdb
     networks:
-       - main
+       main:
+        aliases:
+          - mongodb
 volumes:
-  # default dir on Ubuntu: /var/lib/docker/volumes
   mongodb:
   mongoconfig:
 networks:

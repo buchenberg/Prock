@@ -10,7 +10,7 @@
     "Host": "http://*",
     "Port": "5001",
     "UpstreamUrl": "https://example.com",
-    "MongoDbUri": "mongodb://localhost:27017/",
+    "MongoDbUri": "mongodb://user:pass@mongodb",
     "DbName": "drunken-master"
   }
 }

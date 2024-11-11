@@ -10,7 +10,7 @@ namespace DrunkenMaster.Net.Endpoints;
 
 public static class DrunkenMasterEndpoints
 {
-    private static readonly string[] HttpMethods = new[] { "Get", "Put", "Post", "Patch", "Delete" };
+    private static readonly string[] HttpMethods = ["Get", "Put", "Post", "Patch", "Delete"];
 
     public static void RegisterDrunkenMasterEndpoints(this WebApplication app)
     {
@@ -81,7 +81,7 @@ public static class DrunkenMasterEndpoints
             return TypedResults.Created($"/drunken-master/api/mock-routes/{result.RouteId}", route);
         });
         
-        app.MapPut("/drunken-master/api/mock-routes/{routId:Guid}/disable-route",
+        app.MapPut("/drunken-master/api/mock-routes/{routeId}/disable-route",
             async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, DrunkenMasterDbContext db, CancellationToken cancellationToken) =>
         {
 
@@ -110,7 +110,7 @@ public static class DrunkenMasterEndpoints
             return TypedResults.Ok(response);
         });
         
-        app.MapPut("/drunken-master/api/mock-routes/{routId:Guid}/enable-route",
+        app.MapPut("/drunken-master/api/mock-routes/{routeId}/enable-route",
             async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, DrunkenMasterDbContext db, CancellationToken cancellationToken) =>
             {
 

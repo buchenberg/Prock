@@ -1,40 +1,44 @@
+import axios from "axios";
 import { IMockRoute } from "../components/MockRoutes";
 
+axios.interceptors.request.use(
+    config => {
+        config.headers['Accept'] = 'application/json';
+        config.headers['Content-Type'] = 'application/json';
+            return config;
+        },
+    error => {
+        console.error("Error intercepted", error)
+        return Promise.reject(error);
+    }
+);
+
 export const restartAsync = () => {
-    return fetch("/drunken-master/api/restart", {
-        method: 'POST',
-        mode: 'cors',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    });
+    return axios.post("/drunken-master/api/restart");
 }
+
 export const fetchRoutesAsync = () => {
-    return fetch("/drunken-master/api/mock-routes", { mode: 'cors' });
+    return axios("/drunken-master/api/mock-routes");
 }
+
 export const fetchServerConfigAsync = () => {
-    return fetch("/drunken-master/api/config", { mode: 'cors' });
+    return axios("/drunken-master/api/config");
 }
-export const createNewRoute = (newRoute: IMockRoute) => {
-    return fetch("/drunken-master/api/mock-routes", {
-        method: "POST",
-        mode: 'cors',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newRoute)
-    });
+
+export const createNewRouteAsync = (newRoute: IMockRoute) => {
+    return axios.post("/drunken-master/api/mock-routes", JSON.stringify(newRoute));
 }
-export const updateRoute = (newRoute: IMockRoute) => {
-    return fetch("/drunken-master/api/mock-routes", {
-        method: "PUT",
-        mode: 'cors',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newRoute)
-    });
+
+export const updateRouteAsync = (newRoute: IMockRoute) => {
+    return axios.put("/drunken-master/api/mock-routes", JSON.stringify(newRoute));
+}
+
+export const deleteRouteAsync = (routeId: string) => {
+    return axios.delete(`/drunken-master/api/mock-routes/${routeId}`);
+}
+export const enableRouteAsync = (routeId: string) => {
+    return axios.put(`/drunken-master/api/mock-routes/${routeId}/enable-route`);
+}
+export const disableRouteAsync = (routeId: string) => {
+    return axios.put(`/drunken-master/api/mock-routes/${routeId}/disable-route`);
 }

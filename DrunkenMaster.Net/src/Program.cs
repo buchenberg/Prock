@@ -43,7 +43,7 @@ app.UseCors(options =>
 });
 
 app.UseRouting();
-app.MapHub<NotificationHub>("/signalr");
+app.MapHub<NotificationHub>("/drunken-master/signalr");
 app.RegisterDrunkenMasterEndpoints();
 app.RegisterProxyEndpoints();
 

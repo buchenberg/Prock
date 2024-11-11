@@ -2,10 +2,13 @@ import { Editor } from '@monaco-editor/react';
 import './MockRoutes.css';
 import { useState, useEffect } from "react";
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack } from "react-bootstrap";
-import { PencilSquare, PlusCircle } from "react-bootstrap-icons";
+import { PencilSquare, PlusCircle, Trash } from "react-bootstrap-icons";
 import { CodeBlock, obsidian } from "react-code-blocks";
 import * as api from '../network/api';
+import axios from 'axios';
+
 export interface IMockRoute {
+    enabled?: boolean;
     routeId?: string;
     method?: string;
     path?: string;
@@ -40,6 +43,17 @@ export default function MockRoutes() {
         setShowCreateModal(true);
     }
 
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+    const handleCloseDeleteModal = () => {
+        setSelectedRoute(undefined);
+        setShowDeleteModal(false);
+    }
+    const handleShowDeleteModal = (route: IMockRoute) => {
+        setSelectedRoute(route);
+        setShowDeleteModal(true);
+    }
+
     const handleSubmitNewRoute = async () => {
         // Validate mock
         if (!newRoute?.mock) {
@@ -48,20 +62,17 @@ export default function MockRoutes() {
         }
 
         try {
-            const response = await api.createNewRoute(newRoute);
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
-            }
-
-            const json = await response.json() as IMockRoute;
+            const response = await api.createNewRouteAsync(newRoute);
+            const json = await response.data as IMockRoute;
             setRoutes([
                 ...(routes as []),
                 json
             ]);
             handleCloseCreateModal();
-        } catch (error) {
+        }
+        catch (error: unknown) {
             handleCloseCreateModal();
-            if (error instanceof Error) {
+            if (axios.isAxiosError(error)) {
                 setErrorMessage(error.message);
             } else {
                 console.error(error);
@@ -76,18 +87,35 @@ export default function MockRoutes() {
             return;
         }
         try {
-            const response = await api.updateRoute(selectedRoute);
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
-            }
-
-            const updatedRoute = await response.json() as IMockRoute;
-            console.info(updatedRoute);
+            const response = await api.updateRouteAsync(selectedRoute);
+            const updatedRoute = response.data as IMockRoute;
             setRoutes(routes?.map((route) => (route.routeId === updatedRoute.routeId) ? updatedRoute : route));
             handleCloseEditModal();
-        } catch (error) {
+        }
+        catch (error: unknown) {
             handleCloseEditModal();
-            if (error instanceof Error) {
+            if (axios.isAxiosError(error)) {
+                setErrorMessage(error.message);
+            } else {
+                console.error(error);
+            }
+        }
+    }
+
+    const handleDeleteRoute = async () => {
+        // Validate mock
+        if (!selectedRoute?.routeId) {
+            console.error("no mock to delete!");
+            return;
+        }
+        try {
+            await api.deleteRouteAsync(selectedRoute.routeId);
+            setRoutes(routes?.filter((route) => (route.routeId !== selectedRoute.routeId)));
+            handleCloseDeleteModal();
+        }
+        catch (error: unknown) {
+            handleCloseDeleteModal();
+            if (axios.isAxiosError(error)) {
                 setErrorMessage(error.message);
             } else {
                 console.error(error);
@@ -98,27 +126,25 @@ export default function MockRoutes() {
     const getRoutes = async () => {
         try {
             const response = await api.fetchRoutesAsync();
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
-            }
-
-            const json = await response.json() as IMockRoute[];
-            setRoutes(json);
-        } catch (error) {
-            if (error instanceof Error) {
+            setRoutes(response.data);
+        }
+        catch (error: unknown) {
+            handleCloseEditModal();
+            if (axios.isAxiosError(error)) {
                 setErrorMessage(error.message);
             } else {
                 console.error(error);
             }
         }
+
     }
 
     function isJsonString(str?: string) {
         if (!str) return false;
         try {
             JSON.parse(str);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
-            console.error(error);
             return false;
         }
         return true;
@@ -181,24 +207,59 @@ export default function MockRoutes() {
                                                 {route.path}
                                             </Card.Title>
                                         </Col>
-                                        <Col>
-                                            <PencilSquare className="float-end icon-btn" onClick={() => handleShowEditModal(route)} />
+                                        <Col xs={2}>
+                                            <Form.Check
+                                                type="switch"
+                                                id={`${route.routeId}-switch`}
+                                                className='float-end'
+                                                checked={route.enabled} 
+                                                label={route.enabled ? "Enabled" : "Disabled"}
+                                                onChange={async () => {
+                                                    if (route.routeId === undefined || route.enabled === undefined)
+                                                        return;
+                                                    if (!route.enabled){
+                                                        await api.enableRouteAsync(route.routeId);
+                                                        setRoutes(routes.map(x => {
+                                                            if (x.routeId !== route.routeId)
+                                                                return x;
+                                                            return {...x, enabled: true}
+                                                        }))
+                                                    } 
+                                                    else if(route.enabled){
+                                                        await api.disableRouteAsync(route.routeId);
+                                                        setRoutes(routes.map(x => {
+                                                            if (x.routeId !== route.routeId)
+                                                                return x;
+                                                            return {...x, enabled: false}
+                                                        }))
+                                                    }
+                                                }}/>
                                         </Col>
                                     </Row>
                                 </Card.Header>
                                 <Card.Body>
                                     <Card.Subtitle className='mt-2'>
-                                        Response:
+                                        Mock Response:
                                     </Card.Subtitle>
-                                    <Card.Body>
-                                        <CodeBlock
-                                            language="json"
-                                            text={JSON.stringify(route.mock, null, 2)}
-                                            theme={obsidian}
-                                            showLineNumbers={false}
-                                        />
-                                    </Card.Body>
+                                    <CodeBlock
+                                        language="json"
+                                        text={JSON.stringify(route.mock, null, 2)}
+                                        theme={obsidian}
+                                        showLineNumbers={false}
+                                    />
+
                                 </Card.Body>
+                                <Card.Footer>
+
+                                    <Stack direction='horizontal' gap={2} className="float-end">
+                                        <Button size='sm' variant='secondary' onClick={() => handleShowDeleteModal(route)} >
+                                            <Trash />
+                                        </Button>
+                                        <Button size='sm' onClick={() => handleShowEditModal(route)}>
+                                            <PencilSquare />
+                                        </Button>
+                                    </Stack>
+                                </Card.Footer>
                             </Card>
                         )
                     })}
@@ -210,6 +271,27 @@ export default function MockRoutes() {
                 <div className="d-flex justify-content-around"><Spinner className='m-4 text-center' variant='warning' /></div>
             </>
         }
+        <Modal show={showDeleteModal} onHide={handleCloseDeleteModal}>
+            <Modal.Header closeButton>
+                <Modal.Title>Delete Route</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                {selectedRoute &&
+                    <>
+                        <p>Are you sure you want to delete the following route?</p>
+                        <p><b>{selectedRoute.method}</b> {selectedRoute.path}</p>
+                    </>
+                }
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={handleCloseDeleteModal}>
+                    Cancel
+                </Button>
+                <Button variant="primary" onClick={handleDeleteRoute} disabled={!selectedRoute?.routeId}>
+                    Delete
+                </Button>
+            </Modal.Footer>
+        </Modal>
         <Modal show={showCreateModal} onHide={handleCloseCreateModal} fullscreen={true}>
             <Modal.Header closeButton>
                 <Modal.Title>Add Route</Modal.Title>
@@ -293,7 +375,8 @@ export default function MockRoutes() {
                                 height={"500px"}
                                 defaultLanguage="json"
                                 defaultValue={JSON.stringify(selectedRoute.mock, null, 2)}
-                                onChange={(value) => setSelectedRoute({ ...selectedRoute, mock: isJsonString(value) ? JSON.parse(value as string) : selectedRoute.mock })}
+                                onChange={(value) =>
+                                    setSelectedRoute({ ...selectedRoute, mock: isJsonString(value) ? JSON.parse(value as string) : selectedRoute.mock })}
                             />
                         </Form.Group>
                     </Container>

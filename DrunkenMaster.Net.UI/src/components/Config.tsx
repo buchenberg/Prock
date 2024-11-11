@@ -3,6 +3,7 @@ import './MockRoutes.css';
 import { useState, useEffect } from "react";
 import { Card, Col, Container, Row, Spinner, Stack } from "react-bootstrap";
 import * as api from '../network/api';
+import axios from 'axios';
 
 export interface IServerConfig {
     "connectionString": string;
@@ -16,19 +17,14 @@ export default function Config() {
     const [serverConfig, setServerConfig] = useState<IServerConfig>();
     const [errorMessage, setErrorMessage] = useState("");
 
-
-
-
     const getServerConfig = async () => {
         try {
             const response = await api.fetchServerConfigAsync();
-            if (!response.ok) {
-                throw new Error(`Response status: ${response.status}`);
-            }
-            const json = await response.json() as IServerConfig;
+            const json = await response.data as IServerConfig;
             setServerConfig(json);
-        } catch (error) {
-            if (error instanceof Error) {
+        }
+        catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
                 setErrorMessage(error.message);
             } else {
                 console.error(error);

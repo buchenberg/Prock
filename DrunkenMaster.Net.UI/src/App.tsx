@@ -1,12 +1,13 @@
 import { ReactNode, useEffect, useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
-import { Badge, Container, Modal, Navbar, Spinner, Stack, Tab, Tabs } from 'react-bootstrap'
+import { Container, Modal, Navbar, Spinner, Stack, Tab, Tabs } from 'react-bootstrap'
 import { ArrowCounterclockwise } from 'react-bootstrap-icons';
 import * as api from './network/api';
 import Config from './components/Config';
 import { HubConnectionBuilder } from '@microsoft/signalr';
 import Terminal, { ColorMode, TerminalOutput } from 'react-terminal-ui';
+import axios from 'axios';
 
 function App() {
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -15,9 +16,8 @@ function App() {
 
   useEffect(() => {
     const connection = new HubConnectionBuilder()
-      .withUrl("http://localhost:5001/signalr")
+      .withUrl("http://localhost:5001/drunken-master/signalr")
       .build();
-
     connection.start();
     connection.on("ProxyRequest", data => {
       setTerminalLineData((prev) => [...prev, <TerminalOutput>{data}</TerminalOutput>])
@@ -38,13 +38,11 @@ function App() {
   const handleRestart = async () => {
     handleShowResartModal();
     try {
-      const response = await api.restartAsync();
-      if (!response.ok) {
-        throw new Error(`Response status: ${response.status}`);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(error.message);
+      await api.restartAsync();
+    }
+    catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        console.error(error);
       } else {
         console.error(error);
       }
@@ -55,8 +53,8 @@ function App() {
     <>
       <Navbar data-bs-theme="dark" className="bg-body-tertiary" expand="lg">
         <Container>
-          <Navbar.Brand href="#home">Drunken Master .NET <sup><Badge pill bg="dark"><small>v 0.1 alfalfa</small></Badge></sup></Navbar.Brand>
-          <Stack direction='horizontal' gap={2}><ArrowCounterclockwise className="float-end icon-btn" onClick={handleRestart} /><span>Restart Service</span></Stack>
+          <Navbar.Brand href="#home">Drunken Master</Navbar.Brand>
+          <Stack direction='horizontal' gap={2} className='float-end'><ArrowCounterclockwise className="icon-btn" onClick={handleRestart} /><span>Restart Service</span></Stack>
         </Container>
       </Navbar>
 
@@ -113,4 +111,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

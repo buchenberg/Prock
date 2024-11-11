@@ -1,9 +1,9 @@
 services:
-  api:
-    image: drunkenmaster-api
+  backend:
+    image: drunkenmaster-backend
     restart: always
     environment:
-      - MONGODB_CONNECTION_STRING=mongodb://user:pass@mongodb
+      - MONGODB_CONNECTION_STRING=mongodb://user:pass@database
       - ASPNETCORE_ENVIRONMENT=Docker
     build:
       context: ./DrunkenMaster.Net/
@@ -13,27 +13,27 @@ services:
       - 443:443
       - 80:80
     depends_on:
-      - mongodb
+      - database
     networks:
       main:
         aliases:
-          - api
-  ui:
-    image: drunkenmasternet-ui
+          - backend
+  frontend:
+    image: drunkenmasternet-frontend
     build:
       context: ./DrunkenMaster.Net.UI/
       dockerfile: ./.docker/Dockerfile
     ports:
       - 8080:80
     links:
-      - api:api
+      - backend:backend
     depends_on:
-      - api
+      - backend
     networks:
       main:
         aliases:
-          - ui
-  mongodb:
+          - frontend
+  database:
     image: mongodb/mongodb-community-server:6.0.15-ubi9
     restart: always
     environment:
@@ -45,10 +45,12 @@ services:
       # named volumes
       - mongodb:/data/db
       - mongoconfig:/data/configdb
+    ports:
+      - 27018:27017
     networks:
        main:
         aliases:
-          - mongodb
+          - database
 volumes:
   mongodb:
   mongoconfig:

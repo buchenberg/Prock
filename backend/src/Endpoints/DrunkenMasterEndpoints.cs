@@ -20,7 +20,7 @@ public static class ProckEndpoints
         var upstreamUrl = app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ??
                           "https://example.com";
         var host = app.Configuration.GetSection("Prock").GetSection("Host").Value ?? "http://localhost";
-        var port = app.Configuration.GetSection("Prock").GetSection("Port").Value ?? "5000";
+        var port = app.Configuration.GetSection("Prock").GetSection("Port").Value ?? "5001";
 
         app.MapGet("/prock/api/config", () => Results.Ok(new { connectionString, upstreamUrl, host, port }));
 

@@ -11,6 +11,6 @@
     "Port": "5001",
     "UpstreamUrl": "https://example.com",
     "MongoDbUri": "mongodb://user:pass@database",
-    "DbName": "prock"
+    "DbName": "prock-db"
   }
 }

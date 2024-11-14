@@ -120,3 +120,4 @@ src/.vs/config/applicationhost.config
 /appsettings.Local.json
 .vscode/
 Properties/
+.env

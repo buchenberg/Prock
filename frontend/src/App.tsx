@@ -14,15 +14,19 @@ function App() {
   const [showRestartModal, setShowResartModal] = useState(false);
   const [terminalLineData, setTerminalLineData] = useState<ReactNode[]>([]);
 
+  const backendHost = import.meta.env.VITE_BACKEND_HOST ?? "http://localhost";
+  const backendPort = import.meta.env.VITE_BACKEND_PORT ?? "5001";
+  console.log(`SignalR endpoint: ${backendHost}:${backendPort}/prock/signalr`);
+
   useEffect(() => {
     const connection = new HubConnectionBuilder()
-      .withUrl("http://localhost:5001/prock/signalr")
+      .withUrl(`${backendHost}:${backendPort}/prock/signalr`)
       .build();
     connection.start();
     connection.on("ProxyRequest", data => {
       setTerminalLineData((prev) => [...prev, <TerminalOutput>{data}</TerminalOutput>])
     });
-  }, [terminalLineData])
+  }, [backendHost, backendPort, terminalLineData])
 
   const handleCloseRestartModal = () => {
     setShowResartModal(false);
@@ -53,7 +57,7 @@ function App() {
     <>
       <Navbar data-bs-theme="dark" className="bg-body-tertiary" expand="lg">
         <Container>
-          <Navbar.Brand href="#home">Prock</Navbar.Brand>
+          <Navbar.Brand href="#home">Prock Mocking Proxy</Navbar.Brand>
           <Stack direction='horizontal' gap={2} className='float-end'><ArrowCounterclockwise className="icon-btn" onClick={handleRestart} /><span>Restart Service</span></Stack>
         </Container>
       </Navbar>

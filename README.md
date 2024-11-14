@@ -53,6 +53,7 @@ Running Prock in a docker environment makes deployment much easier as you don't 
   }
 }
 ```
+- Make a copy of the ./frontend/.env.example as /frontend/.env.
 - Don't edit any of the other Prock settings as the ports and etc. need to jive with the docker environment
 - Run `docker-compose up` in a terminal from the root project directory
 - Navigate to http://localhost:8080
@@ -62,6 +63,7 @@ You'll need [MongoDb Community Edition](https://www.mongodb.com/try/download/com
 - Find out what your `ASPNETCORE_ENVIRONMENT` environment variable is set to. It's usually going to be "Local" or "Development" but you can set it to what you want in various ways.
 - Make a copy of `appsettings.json` as `appsettings.Development.json` or `appsettings.Local.json` deponding on what you find
 - The default values should work for a locally installed MongoDb instance. You should only need to change the upstream URL
+- Optionally, make a copy of the ./frontend/.env.example as /frontend/.env and edit as needed.
 - From the ./backend directory run the following in a terminal (or run in your IDE)
     `dotnet run`
 - From ./frontend directory run the following in a terminal

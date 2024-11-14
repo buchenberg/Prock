@@ -5,14 +5,14 @@ using MongoDB.EntityFrameworkCore.Extensions;
 
 namespace backend.Data;
 
-public class DrunkenMasterDbContext : DbContext
+public class ProckDbContext : DbContext
 {
     public DbSet<MockRoute> MockRoutes { get; init; }
-    public static DrunkenMasterDbContext Create(IMongoDatabase database) =>
-        new(new DbContextOptionsBuilder<DrunkenMasterDbContext>()
+    public static ProckDbContext Create(IMongoDatabase database) =>
+        new(new DbContextOptionsBuilder<ProckDbContext>()
             .UseMongoDB(database.Client, database.DatabaseNamespace.DatabaseName)
             .Options);
-    public DrunkenMasterDbContext(DbContextOptions options)
+    public ProckDbContext(DbContextOptions options)
         : base(options)
     {
     }

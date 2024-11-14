@@ -7,10 +7,10 @@ using MongoDB.Driver;
 using Yarp.ReverseProxy.Forwarder;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetSection("DrunkenMaster:MongoDbUri").Value ?? "mongodb://localhost:27017/";
-var host = builder.Configuration.GetSection("DrunkenMaster:Host").Value ?? "http://localhost";
-var port = builder.Configuration.GetSection("DrunkenMaster:Port").Value ?? "5001";
-var dbName = builder.Configuration.GetSection("DrunkenMaster:DbName").Value ?? "drunken-master";
+var connectionString = builder.Configuration.GetSection("Prock:MongoDbUri").Value ?? "mongodb://localhost:27017/";
+var host = builder.Configuration.GetSection("Prock:Host").Value ?? "http://localhost";
+var port = builder.Configuration.GetSection("Prock:Port").Value ?? "5001";
+var dbName = builder.Configuration.GetSection("Prock:DbName").Value ?? "prock";
 
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
@@ -18,7 +18,7 @@ builder.Services.AddHttpForwarder();
 builder.Services.AddSignalR();
 builder.Services.AddCors();
 var dbDataSource = new MongoClient(connectionString);
-builder.Services.AddDbContext<DrunkenMasterDbContext>(options => options.UseMongoDB(dbDataSource, dbName));
+builder.Services.AddDbContext<ProckDbContext>(options => options.UseMongoDB(dbDataSource, dbName));
 builder.Services.AddSingleton(new HttpMessageInvoker(new SocketsHttpHandler
 {
     UseProxy = false,
@@ -44,8 +44,8 @@ app.UseCors(options =>
 });
 
 app.UseRouting();
-app.MapHub<NotificationHub>("/drunken-master/signalr");
-app.RegisterDrunkenMasterEndpoints();
+app.MapHub<NotificationHub>("/prock/signalr");
+app.RegisterProckEndpoints();
 app.RegisterProxyEndpoints();
 
 

@@ -11,9 +11,9 @@ public static class ProxyEndpoints
 {
     public static void RegisterProxyEndpoints(this WebApplication app)
     {
-        var upstreamUrl = app.Configuration.GetSection("DrunkenMaster").GetSection("UpstreamUrl").Value ?? "https://example.com";
+        var upstreamUrl = app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ?? "https://example.com";
 
-        app.Map("/{**catch-all}", async Task<Results<ContentHttpResult, ProblemHttpResult, EmptyHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, DrunkenMasterDbContext db, HttpMessageInvoker httpClient) =>
+        app.Map("/{**catch-all}", async Task<Results<ContentHttpResult, ProblemHttpResult, EmptyHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, ProckDbContext db, HttpMessageInvoker httpClient) =>
         {
             var requestPath = httpContext.Request.Path.Value;
             var requestMethod = httpContext.Request.Method;

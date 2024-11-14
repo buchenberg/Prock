@@ -6,11 +6,11 @@
     }
   },
   "AllowedHosts": "*",
-  "DrunkenMaster": {
+  "Prock": {
     "Host": "http://*",
     "Port": "5001",
     "UpstreamUrl": "https://example.com",
     "MongoDbUri": "mongodb://user:pass@database",
-    "DbName": "drunken-master"
+    "DbName": "prock"
   }
 }

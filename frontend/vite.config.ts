@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   server: {
     proxy: {
-      "/drunken-master": "http://localhost:5001",
+      "/prock": "http://localhost:5001",
     }
   },
   plugins: [react()],

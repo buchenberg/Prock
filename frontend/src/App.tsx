@@ -16,7 +16,7 @@ function App() {
 
   useEffect(() => {
     const connection = new HubConnectionBuilder()
-      .withUrl("http://localhost:5001/drunken-master/signalr")
+      .withUrl("http://localhost:5001/prock/signalr")
       .build();
     connection.start();
     connection.on("ProxyRequest", data => {
@@ -53,7 +53,7 @@ function App() {
     <>
       <Navbar data-bs-theme="dark" className="bg-body-tertiary" expand="lg">
         <Container>
-          <Navbar.Brand href="#home">Drunken Master</Navbar.Brand>
+          <Navbar.Brand href="#home">Prock</Navbar.Brand>
           <Stack direction='horizontal' gap={2} className='float-end'><ArrowCounterclockwise className="icon-btn" onClick={handleRestart} /><span>Restart Service</span></Stack>
         </Container>
       </Navbar>
@@ -93,7 +93,7 @@ function App() {
         keyboard={false}
         centered>
         <Modal.Body>
-          <p><b>Drunken Master is restarting...</b></p>
+          <p><b>Prock is restarting...</b></p>
           <blockquote>
             <p className="mb-0">"Do not fight with the strength, absorb it, and it flows, use it."</p>
             <footer className='float-end'>- <cite title="Yip Man">Yip Man</cite></footer>

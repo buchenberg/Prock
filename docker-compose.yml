@@ -1,12 +1,12 @@
 services:
   backend:
-    image: drunkenmaster-backend
+    image: prock-backend
     restart: always
     environment:
       - MONGODB_CONNECTION_STRING=mongodb://user:pass@database
       - ASPNETCORE_ENVIRONMENT=Docker
     build:
-      context: ./DrunkenMaster.Net/
+      context: ./backend/
       dockerfile: ./.docker/Dockerfile
     ports:
       - 5001:5001
@@ -15,11 +15,11 @@ services:
     depends_on:
       - database
     networks:
-      main:
+      procknet:
         aliases:
           - backend
   frontend:
-    image: drunkenmaster-frontend
+    image: prock-frontend
     restart: always
     build:
       context: ./frontend/
@@ -31,7 +31,7 @@ services:
     depends_on:
       - backend
     networks:
-      main:
+      procknet:
         aliases:
           - frontend
   database:
@@ -49,12 +49,12 @@ services:
     ports:
       - 27018:27017
     networks:
-       main:
+       procknet:
         aliases:
           - database
 volumes:
   mongodb:
   mongoconfig:
 networks:
-  main:
+  procknet:
     driver: bridge

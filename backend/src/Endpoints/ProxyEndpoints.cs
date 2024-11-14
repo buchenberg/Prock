@@ -1,10 +1,11 @@
 ﻿using System.Text.Json;
-using DrunkenMaster.Net.Data;
+using backend.Data;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Yarp.ReverseProxy.Forwarder;
 
-namespace DrunkenMaster.Net.Endpoints;
+namespace backend.Endpoints;
 
 public static class ProxyEndpoints
 {
@@ -12,21 +13,21 @@ public static class ProxyEndpoints
     {
         var upstreamUrl = app.Configuration.GetSection("DrunkenMaster").GetSection("UpstreamUrl").Value ?? "https://example.com";
 
-        app.Map("/{**catch-all}", async (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, DrunkenMasterDbContext db, HttpMessageInvoker httpClient) =>
+        app.Map("/{**catch-all}", async Task<Results<ContentHttpResult, ProblemHttpResult, EmptyHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, DrunkenMasterDbContext db, HttpMessageInvoker httpClient) =>
         {
             var requestPath = httpContext.Request.Path.Value;
             var requestMethod = httpContext.Request.Method;
             await hub.Clients.All.SendAsync("ProxyRequest", $"Request {requestMethod} {requestPath}");
 
-            var mock = await db.MockRoutes.SingleOrDefaultAsync(x => 
+            var mock = await db.MockRoutes.SingleOrDefaultAsync(x =>
                 x.Path.Equals(requestPath, StringComparison.CurrentCultureIgnoreCase)
                 && x.Method.Equals(requestMethod, StringComparison.CurrentCultureIgnoreCase)
                 && x.Enabled);
 
             if (mock != null)
-            {       
-                var mockResponse = JsonSerializer.Deserialize<dynamic>(mock.Mock);
-                return Results.Ok(mockResponse);
+            {
+
+                return TypedResults.Content(content: mock.Mock, contentType: "application/json", statusCode: mock.HttpStatusCode);
             }
 
             var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(100) };
@@ -37,9 +38,10 @@ public static class ProxyEndpoints
                 var errorFeature = httpContext.GetForwarderErrorFeature();
                 var exception = errorFeature?.Exception;
                 app.Logger.LogError("Forwarding error: {@Exception}", exception);
+                return TypedResults.Problem("Forwarding error");
             }
 
-            return Task.CompletedTask;
+            return TypedResults.Empty;
 
         });
 

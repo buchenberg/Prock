@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Net;
-using DrunkenMaster.Net.Data;
-using DrunkenMaster.Net.Endpoints;
+using backend.Data;
+using backend.Endpoints;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using Yarp.ReverseProxy.Forwarder;
@@ -17,7 +17,8 @@ builder.Logging.AddConsole();
 builder.Services.AddHttpForwarder();
 builder.Services.AddSignalR();
 builder.Services.AddCors();
-builder.Services.AddDbContext<DrunkenMasterDbContext>(options => options.UseMongoDB(new MongoClient(connectionString), dbName));
+var dbDataSource = new MongoClient(connectionString);
+builder.Services.AddDbContext<DrunkenMasterDbContext>(options => options.UseMongoDB(dbDataSource, dbName));
 builder.Services.AddSingleton(new HttpMessageInvoker(new SocketsHttpHandler
 {
     UseProxy = false,

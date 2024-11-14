@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 
-namespace DrunkenMaster.Net.Endpoints;
+namespace backend.Endpoints;
 
 public class NotificationHub : Hub;

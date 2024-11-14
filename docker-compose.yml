@@ -19,9 +19,10 @@ services:
         aliases:
           - backend
   frontend:
-    image: drunkenmasternet-frontend
+    image: drunkenmaster-frontend
+    restart: always
     build:
-      context: ./DrunkenMaster.Net.UI/
+      context: ./frontend/
       dockerfile: ./.docker/Dockerfile
     ports:
       - 8080:80
@@ -41,7 +42,7 @@ services:
       - MONGODB_INITDB_ROOT_PASSWORD=pass
     volumes:
       # seeding scripts
-      - ./.docker/mongo-entrypoint:/docker-entrypoint-initdb.d
+      - ./database/.docker/mongo-entrypoint:/docker-entrypoint-initdb.d
       # named volumes
       - mongodb:/data/db
       - mongoconfig:/data/configdb

@@ -11,6 +11,7 @@ export interface IMockRoute {
     enabled?: boolean;
     routeId?: string;
     method?: string;
+    httpStatusCode?: number;
     path?: string;
     mock?: object;
 }
@@ -174,7 +175,7 @@ export default function MockRoutes() {
                 break;
         }
         return (
-            <Badge bg={variant} className='me-3' pill>{method}</Badge>
+            <Badge bg={variant} className='me-3' pill>{method.toUpperCase()}</Badge>
         )
     }
 
@@ -182,7 +183,7 @@ export default function MockRoutes() {
         if (!routes) {
             getRoutes();
         }
-    }, [routes]);
+    }, [getRoutes, routes]);
 
 
 
@@ -239,7 +240,7 @@ export default function MockRoutes() {
                                 </Card.Header>
                                 <Card.Body>
                                     <Card.Subtitle className='mt-2'>
-                                        Mock Response:
+                                        Mock {route.httpStatusCode} Response:
                                     </Card.Subtitle>
                                     <CodeBlock
                                         language="json"
@@ -320,6 +321,14 @@ export default function MockRoutes() {
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewRoute({ ...newRoute, path: e.currentTarget.value })} />
                         </Form.Group>
                         <Form.Group className="mb-3">
+                            <Form.Label>Http Status Code</Form.Label>
+                            <Form.Control
+                                type="number"
+                                placeholder="200"
+                                value={newRoute.httpStatusCode}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewRoute({ ...newRoute, httpStatusCode: e.currentTarget.valueAsNumber })} />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>Mock Response</Form.Label>
                             <Editor
                                 theme="vs-dark"
@@ -337,7 +346,7 @@ export default function MockRoutes() {
                     Cancel
                 </Button>
                 <Button variant="primary" onClick={handleSubmitNewRoute} disabled={
-                    !newRoute?.method || !newRoute.path || !newRoute.mock
+                    !newRoute?.method || !newRoute.path || !newRoute.mock || !newRoute.httpStatusCode
                 }>
                     Submit
                 </Button>
@@ -367,6 +376,14 @@ export default function MockRoutes() {
                                 placeholder="/some/path"
                                 value={selectedRoute.path}
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedRoute({ ...selectedRoute, path: e.currentTarget.value })} />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Http Status Code</Form.Label>
+                            <Form.Control
+                                type="number"
+                                placeholder="200"
+                                value={selectedRoute.httpStatusCode}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSelectedRoute({ ...selectedRoute, httpStatusCode: e.currentTarget.valueAsNumber })} />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>Mock Response</Form.Label>

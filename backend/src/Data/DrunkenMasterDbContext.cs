@@ -1,9 +1,9 @@
-﻿using DrunkenMaster.Net.Data.Entities;
+﻿using backend.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using MongoDB.EntityFrameworkCore.Extensions;
 
-namespace DrunkenMaster.Net.Data;
+namespace backend.Data;
 
 public class DrunkenMasterDbContext : DbContext
 {

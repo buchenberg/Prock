@@ -1,11 +1,11 @@
-# About Drunken Master Mocking Proxy
+# About Prock Mocking Proxy
 
-Drunken Master is designed to make UI development easier and to eliminate blocking issues caused by one or more API features not being available to develop against. It is essentially a reverse proxy (meaning requests are forwarded upstream) with a mocking feature. You can set an upstream URL to e.g. a QA or Dev environment and use the Drunken Master UI to write simple JSON resonse mocks on routes that you specify. Note that it is very basic and a work in progress. Any suggestions or collaboration would be appreciated.
+Prock is designed to make UI development easier and to eliminate blocking issues caused by one or more API features not being available to develop against. It is essentially a reverse proxy (meaning requests are forwarded upstream) with a mocking feature. You can set an upstream URL to e.g. a QA or Dev environment and use the Prock UI to write simple JSON resonse mocks on routes that you specify. Note that it is very basic and a work in progress. Any suggestions or collaboration would be appreciated.
 
 The service is meant to be run locally, either in a Docker container or in a terminal.
 
 ## Architecture
-The Drunken Master backend uses Microsoft [YARP](https://microsoft.github.io/reverse-proxy/) for request forwarding and acts as a transparent reverse proxy. A request on any route that isn't associated with a mock will simply forward to the upstream URL intact and the response will be returned. Mocks are stored on a MongoDB server in the following format:
+The Prock backend uses Microsoft [YARP](https://microsoft.github.io/reverse-proxy/) for request forwarding and acts as a transparent reverse proxy. A request on any route that isn't associated with a mock will simply forward to the upstream URL intact and the response will be returned. Mocks are stored on a MongoDB server in the following format:
 
 ```
 {
@@ -31,7 +31,7 @@ The _id field is the internal MongoDb index and isn't returned as part of the DT
 The user interface uses [React Bootstrap](https://react-bootstrap.netlify.app/) and a [Vite](https://vite.dev/]) based build environament
 
 ## Running in a Docker container (recommended)
-Running Drunken Master in a docker environment makes deployment much easier as you don't need a local instance of MongoDb. Assuming that you have Docker Engine running on your development machine, do the following.
+Running Prock in a docker environment makes deployment much easier as you don't need a local instance of MongoDb. Assuming that you have Docker Engine running on your development machine, do the following.
 
 - Make a copy of the `appsettings.Docker.json.example` file and remove the `.example` part from the file name.
 - Change the `UpstreamUrl` value to point to the API you are developing against. Here's an example:
@@ -91,6 +91,6 @@ You'll need [MongoDb Community Edition](https://www.mongodb.com/try/download/com
 You are winning! Now you have a route at http://localhost:5001/some/path that will respond with 200 OK `{"hello": "drunken master"}`. Build that sweet UI.
 
 ## Alternatives
-Drunken Master isn't the only mocking, proxying, inebriated kung fu master in town. There are viable alternative to accomplish some of the same.
+Prock isn't the only mocking, proxying, inebriated kung fu master in town. There are viable alternative to accomplish some of the same.
 - [tweak](https://chromewebstore.google.com/detail/tweak-mock-and-modify-htt/feahianecghpnipmhphmfgmpdodhcapi?hl=en) is a Chrome extension that allows you to configure and return mocks right in the browser. Smart.
 - [Mock Server](https://github.com/mock-server/mockserver) is a more feature rich but similar approach written in Java

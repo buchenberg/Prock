@@ -1,9 +1,10 @@
 
 import './MockRoutes.css';
 import { useState, useEffect } from "react";
-import { Card, Col, Container, Row, Spinner, Stack } from "react-bootstrap";
+import { Button, Card, Col, Container, NavDropdown, Row, Spinner, Stack } from "react-bootstrap";
 import * as api from '../network/api';
 import axios from 'axios';
+import { Braces, ArrowCounterclockwise } from 'react-bootstrap-icons';
 
 export interface IServerConfig {
     "connectionString": string;
@@ -43,11 +44,9 @@ export default function Config() {
 
     return <>
         {serverConfig ?
-            <>
+            <Container fluid>
                 <div className='mb-3'>
-                    <Stack direction='horizontal' gap={2} >
-                        <h4>Server Configuration</h4>
-                    </Stack>
+                    <h4>Configuration</h4>
                 </div>
                 <Card body>
                     <Row>
@@ -70,7 +69,7 @@ export default function Config() {
                         <Col>{serverConfig?.connectionString ?? ""}</Col>
                     </Row>
                 </Card>
-            </>
+            </Container>
             :
             <Container className='mt-3'>
                 <div className="d-flex justify-content-around"><p>{errorMessage}</p></div>

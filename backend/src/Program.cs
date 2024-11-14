@@ -29,9 +29,14 @@ builder.Services.AddSingleton(new HttpMessageInvoker(new SocketsHttpHandler
     ActivityHeadersPropagator = new ReverseProxyPropagator(DistributedContextPropagator.Current),
     ConnectTimeout = TimeSpan.FromSeconds(15),
 }));
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 
 
@@ -47,6 +52,7 @@ app.UseRouting();
 app.MapHub<NotificationHub>("/prock/signalr");
 app.RegisterProckEndpoints();
 app.RegisterProxyEndpoints();
+
 
 
 app.Run($"{host}:{port}");

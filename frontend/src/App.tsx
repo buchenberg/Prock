@@ -1,8 +1,8 @@
 import { ReactNode, useEffect, useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
-import { Container, Modal, Navbar, Spinner, Stack, Tab, Tabs } from 'react-bootstrap'
-import { ArrowCounterclockwise } from 'react-bootstrap-icons';
+import { Button, Container, Modal, Nav, Navbar, NavDropdown, Spinner, Stack, Tab, Tabs } from 'react-bootstrap'
+import { ArrowCounterclockwise, Braces, DoorOpen } from 'react-bootstrap-icons';
 import * as api from './network/api';
 import Config from './components/Config';
 import { HubConnectionBuilder } from '@microsoft/signalr';
@@ -55,37 +55,41 @@ function App() {
 
   return (
     <>
-      <Navbar data-bs-theme="dark" className="bg-body-tertiary" expand="lg">
-        <Container>
-          <Navbar.Brand href="#home">Prock Mocking Proxy</Navbar.Brand>
-          <Stack direction='horizontal' gap={2} className='float-end'><ArrowCounterclockwise className="icon-btn" onClick={handleRestart} /><span>Restart Service</span></Stack>
+      <Navbar expand="lg">
+        <Container fluid>
+          <Navbar.Brand href="#"><span className='text-danger'>Prock</span> <small className='text-muted'>Mocking Proxy</small></Navbar.Brand>
+          <Navbar.Toggle aria-controls="navbar" />
+          <Navbar.Collapse id="navbar">
+            <Nav className='ms-auto'>
+              <NavDropdown title="Prock Server Menu" id="nav-dropdown">
+                <NavDropdown.Item eventKey="swagger" as="a" target="_blank" rel="noopener noreferrer" href='/swagger/index.html'>Open Swagger UI</NavDropdown.Item>
+                <NavDropdown.Item eventKey="restart" as="button" onClick={handleRestart}>Restart Service</NavDropdown.Item>
+              </NavDropdown>
+            </Nav>
+          </Navbar.Collapse>
         </Container>
       </Navbar>
 
-      <Container className="mt-3">
+      <Container fluid>
         <Tabs
           defaultActiveKey="home"
-          id="uncontrolled-content-tabs"
+          id="content-tabs"
           className="mb-3">
           <Tab eventKey="home" title="Home">
-            <Container className='mt-3'>
+            <Container className='mt-3' fluid>
               <Config />
             </Container>
           </Tab>
           <Tab eventKey="mocks" title="Mocks">
-            <Container className='mt-3'>
+            <Container className='mt-3' fluid>
               <MockRoutes />
             </Container>
           </Tab>
           <Tab eventKey="signals" title="Signals">
-            <Container className='mt-3'>
-
-              <Container>
+            <Container className='mt-3' fluid>
                 <Terminal name='Proxy Requests' colorMode={ColorMode.Dark} onInput={terminalInput => console.log(`New terminal input received: '${terminalInput}'`)}>
                   {terminalLineData}
                 </Terminal>
-              </Container>
-
             </Container>
           </Tab>
         </Tabs>

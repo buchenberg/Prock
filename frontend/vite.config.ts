@@ -6,7 +6,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/prock": "http://localhost:5001",
-    }
+      "/swagger": "http://localhost:5001",
+    },
+    port: 8080
   },
   plugins: [react()],
 })

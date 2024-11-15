@@ -1,10 +1,9 @@
 
 import './MockRoutes.css';
 import { useState, useEffect } from "react";
-import { Button, Card, Col, Container, NavDropdown, Row, Spinner, Stack } from "react-bootstrap";
+import { Card, Col, Container, Row, Spinner } from "react-bootstrap";
 import * as api from '../network/api';
 import axios from 'axios';
-import { Braces, ArrowCounterclockwise } from 'react-bootstrap-icons';
 
 export interface IServerConfig {
     "connectionString": string;

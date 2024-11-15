@@ -11,7 +11,7 @@ public static class ProxyEndpoints
 {
     public static void RegisterProxyEndpoints(this WebApplication app)
     {
-        var upstreamUrl = app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ?? "https://example.com";
+        var defaultUpstreamUrl = app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ?? "https://example.com";
 
         app.Map("/{**catch-all}", async Task<Results<ContentHttpResult, ProblemHttpResult, EmptyHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, ProckDbContext db, HttpMessageInvoker httpClient) =>
         {
@@ -31,6 +31,8 @@ public static class ProxyEndpoints
             }
 
             var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(100) };
+            var config = await db.ProckConfigs.SingleOrDefaultAsync();
+            var upstreamUrl = config?.UpstreamUrl ?? defaultUpstreamUrl;
 
             var error = await forwarder.SendAsync(httpContext, upstreamUrl, httpClient, requestOptions, HttpTransformer.Default);
             if (error != ForwarderError.None)

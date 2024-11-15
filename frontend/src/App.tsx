@@ -1,8 +1,7 @@
 import { ReactNode, useEffect, useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
-import { Button, Container, Modal, Nav, Navbar, NavDropdown, Spinner, Stack, Tab, Tabs } from 'react-bootstrap'
-import { ArrowCounterclockwise, Braces, DoorOpen } from 'react-bootstrap-icons';
+import { Container, Modal, Nav, Navbar, NavDropdown, Spinner, Tab, Tabs } from 'react-bootstrap'
 import * as api from './network/api';
 import Config from './components/Config';
 import { HubConnectionBuilder } from '@microsoft/signalr';

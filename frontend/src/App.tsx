@@ -1,31 +1,19 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
 import { Container, Modal, Nav, Navbar, NavDropdown, Spinner, Tab, Tabs } from 'react-bootstrap'
 import * as api from './network/api';
 import Config from './components/Config';
-import { HubConnectionBuilder } from '@microsoft/signalr';
-import Terminal, { ColorMode, TerminalOutput } from 'react-terminal-ui';
 import axios from 'axios';
+import Logs from './components/Logs';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function App() {
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
   const [showRestartModal, setShowResartModal] = useState(false);
-  const [terminalLineData, setTerminalLineData] = useState<ReactNode[]>([]);
-
-  const backendHost = import.meta.env.VITE_BACKEND_HOST ?? "http://localhost";
-  const backendPort = import.meta.env.VITE_BACKEND_PORT ?? "5001";
-  console.log(`SignalR endpoint: ${backendHost}:${backendPort}/prock/signalr`);
-
-  useEffect(() => {
-    const connection = new HubConnectionBuilder()
-      .withUrl(`${backendHost}:${backendPort}/prock/signalr`)
-      .build();
-    connection.start();
-    connection.on("ProxyRequest", data => {
-      setTerminalLineData((prev) => [...prev, <TerminalOutput>{data}</TerminalOutput>])
-    });
-  }, [backendHost, backendPort, terminalLineData])
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [key, setKey] = useState(location.hash ? location.hash : "#home");
 
   const handleCloseRestartModal = () => {
     setShowResartModal(false);
@@ -52,6 +40,16 @@ function App() {
     }
   }
 
+  const Home = () => (
+    <Container className='mt-3' fluid>
+      <Container fluid>
+        <div className='mb-3'>
+          <h4>Hi</h4>
+        </div>
+      </Container>
+    </Container>
+  )
+
   return (
     <>
       <Navbar expand="lg">
@@ -60,7 +58,7 @@ function App() {
           <Navbar.Toggle aria-controls="navbar" />
           <Navbar.Collapse id="navbar">
             <Nav className='ms-auto'>
-              <NavDropdown title="Prock Server Menu" id="nav-dropdown">
+              <NavDropdown title="Admin" id="nav-dropdown" drop={"start"}>
                 <NavDropdown.Item eventKey="swagger" as="a" target="_blank" rel="noopener noreferrer" href='/swagger/index.html'>Open Swagger UI</NavDropdown.Item>
                 <NavDropdown.Item eventKey="restart" as="button" onClick={handleRestart}>Restart Service</NavDropdown.Item>
               </NavDropdown>
@@ -68,32 +66,28 @@ function App() {
           </Navbar.Collapse>
         </Container>
       </Navbar>
-
       <Container fluid>
         <Tabs
-          defaultActiveKey="home"
-          id="content-tabs"
-          className="mb-3">
-          <Tab eventKey="home" title="Home">
-            <Container className='mt-3' fluid>
-              <Config />
-            </Container>
+          id="page-tabs"
+          activeKey={key}
+          onSelect={(k) => {
+            navigate(k as string);
+            setKey(k as string)
+          }}>
+          <Tab eventKey="#home" title="Home">
+            <Home />
           </Tab>
-          <Tab eventKey="mocks" title="Mocks">
-            <Container className='mt-3' fluid>
-              <MockRoutes />
-            </Container>
+          <Tab eventKey="#proxy" title="Proxy">
+            <Config />
           </Tab>
-          <Tab eventKey="signals" title="Signals">
-            <Container className='mt-3' fluid>
-                <Terminal name='Proxy Requests' colorMode={ColorMode.Dark} onInput={terminalInput => console.log(`New terminal input received: '${terminalInput}'`)}>
-                  {terminalLineData}
-                </Terminal>
-            </Container>
+          <Tab eventKey="#mocks" title="Mocks">
+            <MockRoutes />
+          </Tab>
+          <Tab eventKey="#logs" title="Logs">
+            <Logs />
           </Tab>
         </Tabs>
       </Container>
-
       <Modal show={showRestartModal}
         onHide={handleCloseRestartModal}
         backdrop="static"

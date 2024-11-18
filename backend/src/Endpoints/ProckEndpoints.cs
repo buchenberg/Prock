@@ -11,7 +11,7 @@ namespace backend.Endpoints;
 
 public static class ProckEndpoints
 {
-    private static readonly string[] HttpMethods = ["Get", "Put", "Post", "Patch", "Delete"];
+    private static readonly string[] HttpMethods = ["GET", "PUT", "POST", "PATCH", "DELETE"];
 
     public static void RegisterProckEndpoints(this WebApplication app)
     {
@@ -24,11 +24,11 @@ public static class ProckEndpoints
         app.MapGet("/prock/api/config", async (ProckDbContext db) =>
         {
             var config = await db.ProckConfigs.SingleOrDefaultAsync();
-            var upstreamUrl = config?.UpstreamUrl ??  app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ??
+            var upstreamUrl = config?.UpstreamUrl ?? app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ??
                 "https://example.com";
             return TypedResults.Ok(new { connectionString, upstreamUrl, host, port });
         });
-        
+
         app.MapPut("/prock/api/config/upstream-url", async (ProckConfigDto update, ProckDbContext db, CancellationToken cancellationToken) =>
         {
             var config = await db.ProckConfigs.SingleOrDefaultAsync(cancellationToken);
@@ -60,7 +60,7 @@ public static class ProckEndpoints
                 }).ToList()
                 )
                 : TypedResults.Ok());
-        
+
 
         app.MapGet("/prock/api/mock-routes/{routeId}",
             async Task<Results<Ok<MockRouteDto>, NotFound>> (Guid routeId, ProckDbContext db) =>
@@ -90,13 +90,22 @@ public static class ProckEndpoints
             }
         );
 
+        app.MapGet("/prock/api/http-content-types",
+           () =>
+           {
+               return Results.Ok(ContentTypes.ToArray);
+           }
+       );
+
         app.MapPost("/prock/api/mock-routes",
             async (MockRouteDto route, ProckDbContext db, CancellationToken cancellationToken) =>
         {
+            route.Method = route.Method.ToUpper();
             var methods = new[]
             {
-                "Get", "Put", "Post", "Patch", "Delete"
+                "GET", "PUT", "POST", "PATCH", "DELETE"
             };
+
             if (methods.All(x => x != route.Method))
             {
                 return Results.BadRequest($"{route.Method} is not a valid HTTP method");

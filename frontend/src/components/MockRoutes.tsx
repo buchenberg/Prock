@@ -4,31 +4,34 @@ import { useState, useEffect } from "react";
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack } from "react-bootstrap";
 import { PencilSquare, PlusCircle, Trash } from "react-bootstrap-icons";
 import { CodeBlock, obsidian } from "react-code-blocks";
-import * as api from '../network/api';
-import axios from 'axios';
+import { AsyncDataState, MockRoute, useProckStore } from '../store/store';
 
-export interface IMockRoute {
-    enabled?: boolean;
-    routeId?: string;
-    method?: string;
-    httpStatusCode?: number;
-    path?: string;
-    mock?: object;
-}
+
 
 export default function MockRoutes() {
+    const mockRoutes: AsyncDataState<MockRoute[]> = useProckStore((state) => state.mockRoutes);
+    const getMockRoutes = useProckStore((state) => state.getMockRoutes);
+    const createMockRoute = useProckStore((state) => state.createMockRoute);
+    const updateMockRoute = useProckStore((state) => state.updateMockRoute);
+    const deleteMockRoute = useProckStore((state) => state.deleteMockRoute);
 
-    const [routes, setRoutes] = useState<IMockRoute[]>();
-    const [selectedRoute, setSelectedRoute] = useState<IMockRoute>();
-    const [newRoute, setNewRoute] = useState<IMockRoute>();
+    const [selectedRoute, setSelectedRoute] = useState<MockRoute>();
+    const [newRoute, setNewRoute] = useState<MockRoute>();
+
+    //const httpContentTypes: IAsyncDataState<IMockRoute[]> = useProckStore((state) => state.httpContentTypes);
+    //const getHttpContentTypes = useProckStore((state) => state.getHttpContentTypes);
+    //const httpStatusCodes: IAsyncDataState<IMockRoute[]> = useProckStore((state) => state.httpStatusCodes);
+    //const getHttpStatusCodes = useProckStore((state) => state.getHttpStatusCodes);
+
+
     const [showEditModal, setShowEditModal] = useState(false);
-    const [errorMessage, setErrorMessage] = useState("");
+
 
     const handleCloseEditModal = () => {
         setSelectedRoute(undefined);
         setShowEditModal(false);
     }
-    const handleShowEditModal = (route: IMockRoute) => {
+    const handleShowEditModal = (route: MockRoute) => {
         setSelectedRoute(route);
         setShowEditModal(true);
     }
@@ -50,95 +53,41 @@ export default function MockRoutes() {
         setSelectedRoute(undefined);
         setShowDeleteModal(false);
     }
-    const handleShowDeleteModal = (route: IMockRoute) => {
+    const handleShowDeleteModal = (route: MockRoute) => {
         setSelectedRoute(route);
         setShowDeleteModal(true);
     }
 
     const handleSubmitNewRoute = async () => {
-        // Validate mock
+        // Validate
         if (!newRoute?.mock) {
             console.error("no new mock to submit!");
             return;
         }
-
-        try {
-            const response = await api.createNewRouteAsync(newRoute);
-            const json = await response.data as IMockRoute;
-            setRoutes([
-                ...(routes as []),
-                json
-            ]);
-            handleCloseCreateModal();
-        }
-        catch (error: unknown) {
-            handleCloseCreateModal();
-            if (axios.isAxiosError(error)) {
-                setErrorMessage(error.message);
-            } else {
-                console.error(error);
-            }
-        }
+        createMockRoute(newRoute);
+        handleCloseCreateModal();
     }
 
     const handleSubmitUpdateRoute = async () => {
-        // Validate mock
+        // Validate
         if (!selectedRoute?.mock) {
             console.error("no new mock to submit!");
             return;
         }
-        try {
-            const response = await api.updateRouteAsync(selectedRoute);
-            const updatedRoute = response.data as IMockRoute;
-            setRoutes(routes?.map((route) => (route.routeId === updatedRoute.routeId) ? updatedRoute : route));
-            handleCloseEditModal();
-        }
-        catch (error: unknown) {
-            handleCloseEditModal();
-            if (axios.isAxiosError(error)) {
-                setErrorMessage(error.message);
-            } else {
-                console.error(error);
-            }
-        }
+        updateMockRoute(selectedRoute);
+        handleCloseEditModal();
     }
 
     const handleDeleteRoute = async () => {
-        // Validate mock
+        // Validate
         if (!selectedRoute?.routeId) {
             console.error("no mock to delete!");
             return;
         }
-        try {
-            await api.deleteRouteAsync(selectedRoute.routeId);
-            setRoutes(routes?.filter((route) => (route.routeId !== selectedRoute.routeId)));
-            handleCloseDeleteModal();
-        }
-        catch (error: unknown) {
-            handleCloseDeleteModal();
-            if (axios.isAxiosError(error)) {
-                setErrorMessage(error.message);
-            } else {
-                console.error(error);
-            }
-        }
+        deleteMockRoute(selectedRoute.routeId);
+        handleCloseDeleteModal();
     }
 
-    const getRoutes = async () => {
-        try {
-            const response = await api.fetchRoutesAsync();
-            setRoutes(response.data);
-        }
-        catch (error: unknown) {
-            handleCloseEditModal();
-            if (axios.isAxiosError(error)) {
-                setErrorMessage(error.message);
-            } else {
-                console.error(error);
-            }
-        }
-
-    }
 
     function isJsonString(str?: string) {
         if (!str) return false;
@@ -180,24 +129,24 @@ export default function MockRoutes() {
     }
 
     useEffect(() => {
-        if (!routes) {
-            getRoutes();
+        if (mockRoutes.value == undefined && !mockRoutes.isLoading && !mockRoutes.isError) {
+            getMockRoutes();
         }
-    }, [getRoutes, routes]);
+    }, [getMockRoutes, mockRoutes.isError, mockRoutes.isLoading, mockRoutes.value]);
 
 
 
-    return <>
-        {routes ?
+    return <Container fluid className='mt-3'>
+        <div className='mb-3'>
+            <Stack direction='horizontal' gap={2} className='mt-3'>
+                <h4>Mock Routes</h4>
+                <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
+            </Stack>
+        </div>
+        {mockRoutes.value ?
             <>
-                <div className='mb-3'>
-                    <Stack direction='horizontal' gap={2} className='mt-3'>
-                        <h4>Mock Routes</h4>
-                        <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
-                    </Stack>
-                </div>
                 <Stack gap={3}>
-                    {routes.map((route) => {
+                    {mockRoutes.value.map((route) => {
                         return (
                             <Card key={route.routeId}>
                                 <Card.Header>
@@ -208,34 +157,34 @@ export default function MockRoutes() {
                                                 {route.path}
                                             </Card.Title>
                                         </Col>
-                                        <Col xs={2}>
+                                        {/* <Col xs={2}>
                                             <Form.Check
                                                 type="switch"
                                                 id={`${route.routeId}-switch`}
                                                 className='float-end'
-                                                checked={route.enabled} 
+                                                checked={route.enabled}
                                                 label={route.enabled ? "Enabled" : "Disabled"}
                                                 onChange={async () => {
                                                     if (route.routeId === undefined || route.enabled === undefined)
                                                         return;
-                                                    if (!route.enabled){
+                                                    if (!route.enabled) {
                                                         await api.enableRouteAsync(route.routeId);
                                                         setRoutes(routes.map(x => {
                                                             if (x.routeId !== route.routeId)
                                                                 return x;
-                                                            return {...x, enabled: true}
+                                                            return { ...x, enabled: true }
                                                         }))
-                                                    } 
-                                                    else if(route.enabled){
+                                                    }
+                                                    else if (route.enabled) {
                                                         await api.disableRouteAsync(route.routeId);
                                                         setRoutes(routes.map(x => {
                                                             if (x.routeId !== route.routeId)
                                                                 return x;
-                                                            return {...x, enabled: false}
+                                                            return { ...x, enabled: false }
                                                         }))
                                                     }
-                                                }}/>
-                                        </Col>
+                                                }} />
+                                        </Col> */}
                                     </Row>
                                 </Card.Header>
                                 <Card.Body>
@@ -268,7 +217,7 @@ export default function MockRoutes() {
             </>
             :
             <>
-                <div className="d-flex justify-content-around"><p>{errorMessage}</p></div>
+                {/* <div className="d-flex justify-content-around"><p>{errorMessage}</p></div> */}
                 <div className="d-flex justify-content-around"><Spinner className='m-4 text-center' variant='warning' /></div>
             </>
         }
@@ -364,10 +313,10 @@ export default function MockRoutes() {
                             <Form.Select value={selectedRoute.method}
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedRoute({ ...selectedRoute, method: e.currentTarget.value })}>
                                 <option value={""}>Select...</option>
-                                <option value="Get">Get</option>
-                                <option value="Post">Post</option>
-                                <option value="Put">Put</option>
-                                <option value="Delete">Delete</option>
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
                             </Form.Select>
                         </Form.Group>
                         <Form.Group className="mb-3" controlId="exampleForm.ControlInput1">
@@ -409,5 +358,5 @@ export default function MockRoutes() {
                 </Button>
             </Modal.Footer>
         </Modal>
-    </>;
+    </Container>;
 }

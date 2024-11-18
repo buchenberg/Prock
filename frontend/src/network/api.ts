@@ -8,7 +8,11 @@ axios.interceptors.request.use(
             return config;
         },
     error => {
-        console.error("Error intercepted", error)
+        if (axios.isAxiosError(error)) {
+            console.error(error.message);
+        } else {
+            console.error(error);
+        }
         return Promise.reject(error);
     }
 );
@@ -16,23 +20,24 @@ axios.interceptors.request.use(
 export const restartAsync = () => {
     return axios.post("/prock/api/restart");
 }
-
 export const fetchRoutesAsync = () => {
-    return axios("/prock/api/mock-routes");
+    return axios.get("/prock/api/mock-routes");
 }
-
 export const fetchServerConfigAsync = () => {
-    return axios("/prock/api/config");
+    return axios.get("/prock/api/config");
 }
-
+export const fetchHttpStatusCodesAsync = () => {
+    return axios.get("/prock/api/http-status-codes");
+}
+export const fetchHttpContentTypesAsync = () => {
+    return axios.get("/prock/api/http-content-types");
+}
 export const createNewRouteAsync = (newRoute: IMockRoute) => {
     return axios.post("/prock/api/mock-routes", JSON.stringify(newRoute));
 }
-
 export const updateRouteAsync = (newRoute: IMockRoute) => {
-    return axios.put("/prock/api/mock-routes", JSON.stringify(newRoute));
+    return axios.put<IMockRoute>("/prock/api/mock-routes", JSON.stringify(newRoute));
 }
-
 export const deleteRouteAsync = (routeId: string) => {
     return axios.delete(`/prock/api/mock-routes/${routeId}`);
 }

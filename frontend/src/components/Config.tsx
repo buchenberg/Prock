@@ -1,78 +1,59 @@
 
 import './MockRoutes.css';
-import { useState, useEffect } from "react";
-import { Card, Col, Container, Row, Spinner } from "react-bootstrap";
-import * as api from '../network/api';
-import axios from 'axios';
+import { useEffect } from "react";
+import { Alert, Card, Col, Container, Row, Spinner } from "react-bootstrap";
+import { AsyncDataState, ServerConfig, useProckStore } from '../store/store';
 
-export interface IServerConfig {
-    "connectionString": string;
-    "upstreamUrl": string;
-    "host": string;
-    "port": string;
-}
+
 
 export default function Config() {
-
-    const [serverConfig, setServerConfig] = useState<IServerConfig>();
-    const [errorMessage, setErrorMessage] = useState("");
-
-    const getServerConfig = async () => {
-        try {
-            const response = await api.fetchServerConfigAsync();
-            const json = await response.data as IServerConfig;
-            setServerConfig(json);
-        }
-        catch (error: unknown) {
-            if (axios.isAxiosError(error)) {
-                setErrorMessage(error.message);
-            } else {
-                console.error(error);
-            }
-        }
-    }
-
+    const prockConfig: AsyncDataState<ServerConfig> = useProckStore((state) => state.prockConfig);
+    const getProckConfigs = useProckStore((state) => state.getProckConfigs);
 
     useEffect(() => {
-        if (!serverConfig) {
-            getServerConfig();
+        if (prockConfig.value == undefined && !prockConfig.isLoading && !prockConfig.isError) {
+            getProckConfigs();
         }
-    }, [serverConfig]);
+    }, [getProckConfigs, prockConfig.isError, prockConfig.isLoading, prockConfig.value]);
 
 
 
     return <>
-        {serverConfig ?
-            <Container fluid>
+        {prockConfig.value ?
+            <Container fluid className='mt-3'>
                 <div className='mb-3'>
                     <h4>Configuration</h4>
                 </div>
                 <Card body>
                     <Row>
                         <Col><b>Host</b></Col>
-                        <Col>{serverConfig?.host ?? ""}</Col>
+                        <Col>{prockConfig.value.host ?? ""}</Col>
                     </Row>
                     <hr />
                     <Row>
                         <Col><b>Port</b></Col>
-                        <Col>{serverConfig?.port ?? ""}</Col>
+                        <Col>{prockConfig.value.port ?? ""}</Col>
                     </Row>
                     <hr />
                     <Row>
                         <Col><b>Upstream URL</b></Col>
-                        <Col>{serverConfig?.upstreamUrl ?? ""}</Col>
+                        <Col>{prockConfig.value.upstreamUrl ?? ""}</Col>
                     </Row>
                     <hr />
                     <Row>
                         <Col><b>MongoDb Connection String</b></Col>
-                        <Col>{serverConfig?.connectionString ?? ""}</Col>
+                        <Col>{prockConfig.value.connectionString ?? ""}</Col>
                     </Row>
                 </Card>
             </Container>
             :
             <Container className='mt-3'>
-                <div className="d-flex justify-content-around"><p>{errorMessage}</p></div>
-                <div className="d-flex justify-content-around"><Spinner className='m-4 text-center' variant='warning' /></div>
+                {prockConfig.isLoading ?
+                    <div className="d-flex justify-content-around"><Spinner className='m-4 text-center' variant='warning' /></div>
+                    :
+                    <div className="d-flex justify-content-around"><Alert className='m-4 text-center' variant='warning' />An error encountered trying to load configuration data. {prockConfig.errorMessage}</div>
+                }
+
             </Container>
         }
     </>;

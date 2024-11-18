@@ -30,7 +30,11 @@ builder.Services.AddSingleton(new HttpMessageInvoker(new SocketsHttpHandler
     ConnectTimeout = TimeSpan.FromSeconds(15),
 }));
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(opt => opt.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+{
+    Title = "Prock API",
+    Description = "Description of the service"
+}));
 
 
 var app = builder.Build();
@@ -49,7 +53,7 @@ app.UseCors(options =>
 });
 
 app.UseRouting();
-app.MapHub<NotificationHub>("/prock/signalr");
+app.MapHub<NotificationHub>("/prock/api/signalr");
 app.RegisterProckEndpoints();
 app.RegisterProxyEndpoints();
 

@@ -56,6 +56,7 @@ app.UseRouting();
 app.MapHub<NotificationHub>("/prock/api/signalr");
 app.RegisterProckEndpoints();
 app.RegisterProxyEndpoints();
+app.RegisterConfigEndpoints();
 
 
 

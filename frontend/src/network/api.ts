@@ -1,5 +1,5 @@
 import axios from "axios";
-import { IMockRoute } from "../components/MockRoutes";
+import { MockRoute } from "../store/store";
 
 axios.interceptors.request.use(
     config => {
@@ -32,11 +32,11 @@ export const fetchHttpStatusCodesAsync = () => {
 export const fetchHttpContentTypesAsync = () => {
     return axios.get("/prock/api/http-content-types");
 }
-export const createNewRouteAsync = (newRoute: IMockRoute) => {
+export const createNewRouteAsync = (newRoute: MockRoute) => {
     return axios.post("/prock/api/mock-routes", JSON.stringify(newRoute));
 }
-export const updateRouteAsync = (newRoute: IMockRoute) => {
-    return axios.put<IMockRoute>("/prock/api/mock-routes", JSON.stringify(newRoute));
+export const updateRouteAsync = (newRoute: MockRoute) => {
+    return axios.put<MockRoute>("/prock/api/mock-routes", JSON.stringify(newRoute));
 }
 export const deleteRouteAsync = (routeId: string) => {
     return axios.delete(`/prock/api/mock-routes/${routeId}`);

@@ -26,8 +26,6 @@ services:
       dockerfile: ./.docker/Dockerfile
     ports:
       - 8080:80
-    links:
-      - backend:backend
     depends_on:
       - backend
     networks:

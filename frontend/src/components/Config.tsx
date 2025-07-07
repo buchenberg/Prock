@@ -1,7 +1,7 @@
 
 import './MockRoutes.css';
-import { useEffect } from "react";
-import { Alert, Card, Col, Container, Row, Spinner } from "react-bootstrap";
+import { useEffect, useState } from "react";
+import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
 import { AsyncDataState, ServerConfig, useProckStore } from '../store/store';
 
 
@@ -9,12 +9,23 @@ import { AsyncDataState, ServerConfig, useProckStore } from '../store/store';
 export default function Config() {
     const prockConfig: AsyncDataState<ServerConfig> = useProckStore((state) => state.prockConfig);
     const getProckConfigs = useProckStore((state) => state.getProckConfigs);
+    const updateUpstreamUrl = useProckStore((state) => state.updateUpstreamUrl);
+    const [upstreamUrl, setUpstreamUrl] = useState<string>("");
 
     useEffect(() => {
-        if (prockConfig.value == undefined && !prockConfig.isLoading && !prockConfig.isError) {
-            getProckConfigs();
+        async function fetchConfigs() {
+            if (prockConfig.value == undefined && !prockConfig.isLoading && !prockConfig.isError) {
+                await getProckConfigs();
+            }
         }
+        fetchConfigs();
     }, [getProckConfigs, prockConfig.isError, prockConfig.isLoading, prockConfig.value]);
+
+    useEffect(() => {
+        if (prockConfig.value) {
+            setUpstreamUrl(prockConfig.value.upstreamUrl ?? "");
+        }
+    }, [prockConfig.value]);
 
 
 
@@ -36,14 +47,32 @@ export default function Config() {
                     </Row>
                     <hr />
                     <Row>
-                        <Col><b>Upstream URL</b></Col>
-                        <Col>{prockConfig.value.upstreamUrl ?? ""}</Col>
-                    </Row>
-                    <hr />
-                    <Row>
                         <Col><b>MongoDb Connection String</b></Col>
                         <Col>{prockConfig.value.connectionString ?? ""}</Col>
                     </Row>
+                    <Row>
+                        <Form.Group as={Col} className='mt-3'>
+                            <Form.Label>Upstream URL</Form.Label>
+                            <Form.Control
+                                type="text"
+                                value={upstreamUrl ?? ""}
+                                onChange={(e) => {
+                                    setUpstreamUrl(e.target.value);
+                                }}
+                            />
+                            <Button
+                                className='mt-2'
+                                variant='primary'
+                                disabled={prockConfig.isLoading || upstreamUrl === prockConfig.value?.upstreamUrl}
+                                onClick={() => {
+                                    updateUpstreamUrl(upstreamUrl);
+                                }}
+                            >
+                                {prockConfig.isLoading ? <Spinner animation="border" size="sm" /> : "Update"}
+                            </Button>
+                        </Form.Group>
+                    </Row>
+
                 </Card>
             </Container>
             :

@@ -40,7 +40,8 @@ interface IProckState {
     updateMockRoute: (mockRoute: MockRoute) => void;
     deleteMockRoute: (mockRouteId: string) => void;
     prockConfig: AsyncDataState<ServerConfig>;
-    getProckConfigs: () => void;
+    getProckConfigs: () => Promise<void>;
+    updateUpstreamUrl: (upstreamUrl: string) => void;
 }
 
 
@@ -188,6 +189,25 @@ export const useProckStore = create<IProckState>()((set, get) => (
                 }
             }
         },
+        updateUpstreamUrl: async (upstreamUrl: string) => {
+            const currentConfig = get().prockConfig.value;
+            if (currentConfig) {
+                const updatedConfig: ServerConfig = { ...currentConfig, upstreamUrl };
+                set({ prockConfig: { isLoading: true, isError: false, value: updatedConfig } });
+                try {
+                    await api.updateUpstreamUrlAsync(upstreamUrl);
+                    set({ prockConfig: { isLoading: false, isError: false, value: updatedConfig } });
+                } catch (error: unknown) {
+                    if (axios.isAxiosError(error)) {
+                        set({ prockConfig: { isLoading: false, isError: true, errorMessage: error.message, value: currentConfig } });
+                        console.error(error.message);
+                    } else {
+                        const typedError = error as Error;
+                        set({ prockConfig: { isLoading: false, isError: true, errorMessage: typedError.message, value: currentConfig } });
+                    }
+                }
+            }
+        }
     }
 )
 )

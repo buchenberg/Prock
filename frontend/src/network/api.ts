@@ -47,3 +47,7 @@ export const enableRouteAsync = (routeId: string) => {
 export const disableRouteAsync = (routeId: string) => {
     return axios.put(`/prock/api/mock-routes/${routeId}/disable-route`);
 }
+
+export function updateUpstreamUrlAsync(updatedUrl: string) {
+    return axios.put("/prock/api/config/upstream-url", { upstreamUrl: updatedUrl });
+}

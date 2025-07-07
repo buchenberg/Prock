@@ -31,7 +31,7 @@ public static class ProxyEndpoints
             }
 
             var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(100) };
-            var config = await db.ProckConfigs.SingleOrDefaultAsync();
+            var config = await db.ProckConfig.SingleOrDefaultAsync();
             var upstreamUrl = config?.UpstreamUrl ?? defaultUpstreamUrl;
 
             var error = await forwarder.SendAsync(httpContext, upstreamUrl, httpClient, requestOptions, HttpTransformer.Default);

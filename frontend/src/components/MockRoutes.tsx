@@ -18,11 +18,6 @@ export default function MockRoutes() {
     const [selectedRoute, setSelectedRoute] = useState<MockRoute>();
     const [newRoute, setNewRoute] = useState<MockRoute>();
 
-    //const httpContentTypes: IAsyncDataState<IMockRoute[]> = useProckStore((state) => state.httpContentTypes);
-    //const getHttpContentTypes = useProckStore((state) => state.getHttpContentTypes);
-    //const httpStatusCodes: IAsyncDataState<IMockRoute[]> = useProckStore((state) => state.httpStatusCodes);
-    //const getHttpStatusCodes = useProckStore((state) => state.getHttpStatusCodes);
-
 
     const [showEditModal, setShowEditModal] = useState(false);
 

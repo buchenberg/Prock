@@ -1,8 +1,9 @@
 
 import './MockRoutes.css';
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Container, Form, Row, Spinner } from "react-bootstrap";
+import { Alert, Button, Card, Col, Container, Form, Row, Spinner, Stack } from "react-bootstrap";
 import { AsyncDataState, ServerConfig, useProckStore } from '../store/store';
+import { PencilSquare } from 'react-bootstrap-icons';
 
 
 
@@ -11,6 +12,7 @@ export default function Config() {
     const getProckConfigs = useProckStore((state) => state.getProckConfigs);
     const updateUpstreamUrl = useProckStore((state) => state.updateUpstreamUrl);
     const [upstreamUrl, setUpstreamUrl] = useState<string>("");
+    const [showEdit, setShowEdit] = useState<boolean>(false);
 
     useEffect(() => {
         async function fetchConfigs() {
@@ -26,6 +28,11 @@ export default function Config() {
             setUpstreamUrl(prockConfig.value.upstreamUrl ?? "");
         }
     }, [prockConfig.value]);
+
+
+    const handleShowEditUrl = () => {
+        setShowEdit(prev => !prev);
+    };
 
 
 
@@ -50,29 +57,40 @@ export default function Config() {
                         <Col><b>MongoDb Connection String</b></Col>
                         <Col>{prockConfig.value.connectionString ?? ""}</Col>
                     </Row>
+                    <hr />
                     <Row>
-                        <Form.Group as={Col} className='mt-3'>
-                            <Form.Label>Upstream URL</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={upstreamUrl ?? ""}
-                                onChange={(e) => {
-                                    setUpstreamUrl(e.target.value);
-                                }}
+                        <Col><b>Upstream URL</b></Col>
+                        <Col><Stack direction='horizontal' gap={2}>
+                            <span>{prockConfig.value.upstreamUrl ?? ""}</span>
+                            <PencilSquare
+                                className="icon-btn text-primary"
+                                onClick={handleShowEditUrl}
                             />
-                            <Button
-                                className='mt-2'
-                                variant='primary'
-                                disabled={prockConfig.isLoading || upstreamUrl === prockConfig.value?.upstreamUrl}
-                                onClick={() => {
-                                    updateUpstreamUrl(upstreamUrl);
-                                }}
-                            >
-                                {prockConfig.isLoading ? <Spinner animation="border" size="sm" /> : "Update"}
-                            </Button>
-                        </Form.Group>
+                        </Stack></Col>
                     </Row>
-
+                    {showEdit &&
+                        <Row>
+                            <Form.Group as={Col} className='mt-3'>
+                                <Form.Control
+                                    type="text"
+                                    value={upstreamUrl ?? ""}
+                                    onChange={(e) => {
+                                        setUpstreamUrl(e.target.value);
+                                    }}
+                                />
+                                <Button
+                                    className='mt-2'
+                                    variant='primary'
+                                    disabled={prockConfig.isLoading || upstreamUrl === prockConfig.value?.upstreamUrl}
+                                    onClick={() => {
+                                        updateUpstreamUrl(upstreamUrl);
+                                    }}
+                                >
+                                    {prockConfig.isLoading ? <Spinner animation="border" size="sm" /> : "Update"}
+                                </Button>
+                            </Form.Group>
+                        </Row>
+                    }
                 </Card>
             </Container>
             :

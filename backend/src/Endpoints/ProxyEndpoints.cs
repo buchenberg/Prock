@@ -20,8 +20,8 @@ public static class ProxyEndpoints
             await hub.Clients.All.SendAsync("ProxyRequest", $"Request {requestMethod} {requestPath}");
 
             var mock = await db.MockRoutes.SingleOrDefaultAsync(x =>
-                x.Path.Equals(requestPath, StringComparison.CurrentCultureIgnoreCase)
-                && x.Method.Equals(requestMethod, StringComparison.CurrentCultureIgnoreCase)
+                string.Equals(x.Path, requestPath, StringComparison.CurrentCultureIgnoreCase)
+                && string.Equals(x.Method, requestMethod, StringComparison.CurrentCultureIgnoreCase)
                 && x.Enabled);
 
             if (mock != null)

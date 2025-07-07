@@ -11,41 +11,12 @@ namespace backend.Endpoints;
 
 public static class ProckEndpoints
 {
-    private static readonly string[] HttpMethods = ["GET", "PUT", "POST", "PATCH", "DELETE"];
+    private static readonly string[] HttpMethods = [
+        "GET", "PUT", "POST", "PATCH", "DELETE"
+        ];
 
     public static void RegisterProckEndpoints(this WebApplication app)
     {
-        var connectionString = app.Configuration.GetSection("Prock").GetSection("MongoDbUri").Value ??
-                               "mongodb://localhost:27017/";
-
-        var host = app.Configuration.GetSection("Prock").GetSection("Host").Value ?? "http://localhost";
-        var port = app.Configuration.GetSection("Prock").GetSection("Port").Value ?? "5001";
-
-        app.MapGet("/prock/api/config", async (ProckDbContext db) =>
-        {
-            var config = await db.ProckConfigs.SingleOrDefaultAsync();
-            var upstreamUrl = config?.UpstreamUrl ?? app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ??
-                "https://example.com";
-            return TypedResults.Ok(new { connectionString, upstreamUrl, host, port });
-        });
-
-        app.MapPut("/prock/api/config/upstream-url", async (ProckConfigDto update, ProckDbContext db, CancellationToken cancellationToken) =>
-        {
-            var config = await db.ProckConfigs.SingleOrDefaultAsync(cancellationToken);
-            if (config == null)
-            {
-                config = new ProckConfig()
-                {
-                    Id = Guid.NewGuid(),
-                    UpstreamUrl = update.UpstreamUrl
-                };
-                db.ProckConfigs.Add(config);
-                return Results.Ok(config);
-            }
-            config.UpstreamUrl = update.UpstreamUrl;
-            await db.SaveChangesAsync(cancellationToken);
-            return TypedResults.Ok(config);
-        });
 
         app.MapGet("/prock/api/mock-routes", async Task<Results<Ok<List<MockRouteDto>>, Ok>> (ProckDbContext db) =>
             await db.MockRoutes.ToListAsync() is List<MockRoute> response
@@ -55,7 +26,7 @@ public static class ProckEndpoints
                     Method = x.Method,
                     Path = x.Path,
                     HttpStatusCode = x.HttpStatusCode,
-                    Mock = JsonSerializer.Deserialize<dynamic>(x.Mock),
+                    Mock = x.Mock != null ? JsonSerializer.Deserialize<dynamic>(x.Mock) : null,
                     Enabled = x.Enabled
                 }).ToList()
                 )
@@ -71,7 +42,7 @@ public static class ProckEndpoints
                         Method = response.Method,
                         Path = response.Path,
                         HttpStatusCode = response.HttpStatusCode,
-                        Mock = JsonSerializer.Deserialize<dynamic>(response.Mock),
+                        Mock = response.Mock != null ? JsonSerializer.Deserialize<dynamic>(response.Mock) : null,
                         Enabled = response.Enabled
                     })
                     : TypedResults.NotFound());
@@ -100,13 +71,9 @@ public static class ProckEndpoints
         app.MapPost("/prock/api/mock-routes",
             async (MockRouteDto route, ProckDbContext db, CancellationToken cancellationToken) =>
         {
-            route.Method = route.Method.ToUpper();
-            var methods = new[]
-            {
-                "GET", "PUT", "POST", "PATCH", "DELETE"
-            };
+            route.Method = (route.Method ?? string.Empty).ToUpper();
 
-            if (methods.All(x => x != route.Method))
+            if (HttpMethods.All(x => x != route.Method))
             {
                 return Results.BadRequest($"{route.Method} is not a valid HTTP method");
             }
@@ -155,7 +122,7 @@ public static class ProckEndpoints
                 Method = persistedRoute.Method,
                 Path = persistedRoute.Path,
                 HttpStatusCode = persistedRoute.HttpStatusCode,
-                Mock = JsonSerializer.Serialize(persistedRoute.Mock),
+                Mock = persistedRoute.Mock != null ? JsonSerializer.Deserialize<dynamic>(persistedRoute.Mock) : null,
                 Enabled = persistedRoute.Enabled
             };
 

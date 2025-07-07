@@ -1,6 +1,9 @@
-﻿namespace backend.Data.Dto;
+﻿using backend.Data.Entities;
 
-public class ProckConfigDto
+namespace backend.Data.Dto;
+
+public class ProckConfigDto(ProckConfig config)
 {
-    public string UpstreamUrl { get; set; }
+    public string? UpstreamUrl { get; set; } = config.UpstreamUrl;
+
 }

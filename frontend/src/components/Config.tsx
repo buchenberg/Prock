@@ -60,13 +60,15 @@ export default function Config() {
                     <hr />
                     <Row>
                         <Col><b>Upstream URL</b></Col>
-                        <Col><Stack direction='horizontal' gap={2}>
-                            <span>{prockConfig.value.upstreamUrl ?? ""}</span>
-                            <PencilSquare
-                                className="icon-btn text-primary"
-                                onClick={handleShowEditUrl}
-                            />
-                        </Stack></Col>
+                        <Col>
+                            <Stack direction='horizontal' gap={2}>
+                                <span>{prockConfig.value.upstreamUrl ?? ""}</span>
+                                <PencilSquare
+                                    className="icon-btn text-primary"
+                                    onClick={handleShowEditUrl}
+                                />
+                            </Stack>
+                        </Col>
                     </Row>
                     {showEdit &&
                         <Row>

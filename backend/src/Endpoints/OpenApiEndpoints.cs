@@ -1,13 +1,14 @@
 using System.Text.Json;
 using backend.Data;
 using backend.Data.Dto;
-using backend.Data.Entities;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Readers;
 using MongoDB.Bson;
 using OpenApiDocument = backend.Data.Entities.OpenApiDocument;
 using MsOpenApiDocument = Microsoft.OpenApi.Models.OpenApiDocument;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace backend.Endpoints;
 
@@ -197,12 +198,11 @@ public static class OpenApiEndpoints
 
                 return TypedResults.NoContent();
             });
-
         // Get OpenAPI JSON for a specific document
         app.MapGet("/prock/api/openapi-documents/{documentId}/json",
-            async Task<Results<Ok<string>, NotFound>> (Guid documentId, ProckDbContext db) =>
+            async Task<IResult> (Guid documentId, ProckDbContext db) => 
                 await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiDocument document && !string.IsNullOrEmpty(document.OriginalJson)
-                    ? TypedResults.Ok(document.OriginalJson)
+                    ? Results.Ok(JsonSerializer.Deserialize<object>(document.OriginalJson))
                     : TypedResults.NotFound());
     }
 

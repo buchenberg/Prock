@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Readers;
 using MongoDB.Bson;
-using OpenApiDocument = backend.Data.Entities.OpenApiDocument;
-using MsOpenApiDocument = Microsoft.OpenApi.Models.OpenApiDocument;
+using OpenApiSpecification = backend.Data.Entities.OpenApiSpecification;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Microsoft.OpenApi.Models;
 
 namespace backend.Endpoints;
 
@@ -19,7 +19,7 @@ public static class OpenApiEndpoints
         // Get all OpenAPI documents
         app.MapGet("/prock/api/openapi-documents", 
             async Task<Results<Ok<List<OpenApiDocumentDto>>, Ok>> (ProckDbContext db) =>
-            await db.OpenApiDocuments.Where(x => x.IsActive).ToListAsync() is List<OpenApiDocument> documents
+            await db.OpenApiDocuments.Where(x => x.IsActive).ToListAsync() is List<OpenApiSpecification> documents
                 ? TypedResults.Ok(documents.Select(doc => new OpenApiDocumentDto
                 {
                     DocumentId = doc.DocumentId,
@@ -41,7 +41,7 @@ public static class OpenApiEndpoints
         // Get specific OpenAPI document by ID
         app.MapGet("/prock/api/openapi-documents/{documentId}",
             async Task<Results<Ok<OpenApiDocumentDetailDto>, NotFound>> (Guid documentId, ProckDbContext db) =>
-                await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiDocument document
+                await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiSpecification document
                     ? TypedResults.Ok(new OpenApiDocumentDetailDto
                     {
                         DocumentId = document.DocumentId,
@@ -82,7 +82,7 @@ public static class OpenApiEndpoints
                         return TypedResults.BadRequest("Invalid OpenAPI JSON format");
                     }
 
-                    var entity = new OpenApiDocument
+                    var entity = new OpenApiSpecification
                     {
                         DocumentId = Guid.NewGuid(),
                         Title = request.Title ?? msOpenApiDocument.Info?.Title ?? "Untitled API",
@@ -201,12 +201,12 @@ public static class OpenApiEndpoints
         // Get OpenAPI JSON for a specific document
         app.MapGet("/prock/api/openapi-documents/{documentId}/json",
             async Task<IResult> (Guid documentId, ProckDbContext db) => 
-                await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiDocument document && !string.IsNullOrEmpty(document.OriginalJson)
-                    ? Results.Ok(JsonSerializer.Deserialize<object>(document.OriginalJson))
+                await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiSpecification document && !string.IsNullOrEmpty(document.OriginalJson)
+                    ? Results.Ok(ParseOpenApiJson(document.OriginalJson))
                     : TypedResults.NotFound());
     }
 
-    private static MsOpenApiDocument? ParseOpenApiJson(string json)
+    private static OpenApiDocument? ParseOpenApiJson(string json)
     {
         try
         {
@@ -226,7 +226,7 @@ public static class OpenApiEndpoints
         }
     }
 
-    private static void ExtractOpenApiInformation(OpenApiDocument entity, MsOpenApiDocument parsedDoc)
+    private static void ExtractOpenApiInformation(OpenApiSpecification entity, OpenApiDocument parsedDoc)
     {
         try
         {

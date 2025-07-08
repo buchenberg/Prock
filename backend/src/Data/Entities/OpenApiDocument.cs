@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace backend.Data.Entities;
 
-public class OpenApiDocument
+public class OpenApiSpecification
 {
     [BsonId]
     public ObjectId _id { get; set; }

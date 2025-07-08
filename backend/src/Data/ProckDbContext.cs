@@ -9,7 +9,7 @@ public class ProckDbContext : DbContext
 {
     public DbSet<MockRoute> MockRoutes { get; init; }
     public DbSet<ProckConfig> ProckConfig { get; init; }
-    public DbSet<OpenApiDocument> OpenApiDocuments { get; init; }
+    public DbSet<OpenApiSpecification> OpenApiDocuments { get; init; }
     public static ProckDbContext Create(IMongoDatabase database) =>
         new(new DbContextOptionsBuilder<ProckDbContext>()
             .UseMongoDB(database.Client, database.DatabaseNamespace.DatabaseName)
@@ -25,10 +25,10 @@ public class ProckDbContext : DbContext
         // Configure collections
         modelBuilder.Entity<MockRoute>().ToCollection("mockRoutes");
         modelBuilder.Entity<ProckConfig>().ToCollection("prockConfig");
-        modelBuilder.Entity<OpenApiDocument>().ToCollection("openApiDocuments");
+        modelBuilder.Entity<OpenApiSpecification>().ToCollection("openApiDocuments");
         
         // Configure OpenApiDocument entity specifically for MongoDB
-        modelBuilder.Entity<OpenApiDocument>(entity =>
+        modelBuilder.Entity<OpenApiSpecification>(entity =>
         {
             entity.HasKey(e => e._id);
             entity.Property(e => e.DocumentId);
@@ -72,17 +72,17 @@ public class ProckDbContext : DbContext
         return await ProckConfig.SingleOrDefaultAsync(x => x.Id != Guid.Empty, cancellationToken);
     }
     
-    public async Task<List<OpenApiDocument>> GetActiveOpenApiDocumentsAsync(CancellationToken cancellationToken = default)
+    public async Task<List<OpenApiSpecification>> GetActiveOpenApiDocumentsAsync(CancellationToken cancellationToken = default)
     {
         return await OpenApiDocuments.Where(x => x.IsActive).ToListAsync(cancellationToken);
     }
     
-    public async Task<OpenApiDocument?> GetOpenApiDocumentByIdAsync(Guid documentId, CancellationToken cancellationToken = default)
+    public async Task<OpenApiSpecification?> GetOpenApiDocumentByIdAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
         return await OpenApiDocuments.SingleOrDefaultAsync(x => x.DocumentId == documentId, cancellationToken);
     }
     
-    public async Task<OpenApiDocument?> GetOpenApiDocumentByTitleAsync(string title, CancellationToken cancellationToken = default)
+    public async Task<OpenApiSpecification?> GetOpenApiDocumentByTitleAsync(string title, CancellationToken cancellationToken = default)
     {
         return await OpenApiDocuments.SingleOrDefaultAsync(x => x.Title == title && x.IsActive, cancellationToken);
     }

@@ -6,6 +6,7 @@ import * as api from './network/api';
 import Config from './components/Config';
 import axios from 'axios';
 import Logs from './components/Logs';
+import OpenApiDocuments from './components/OpenApiDocuments';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 function App() {
@@ -82,6 +83,9 @@ function App() {
           </Tab>
           <Tab eventKey="#mocks" title="Mocks">
             <MockRoutes />
+          </Tab>
+          <Tab eventKey="#openapi" title="OpenAPI">
+            <OpenApiDocuments />
           </Tab>
           <Tab eventKey="#logs" title="Logs">
             <Logs />

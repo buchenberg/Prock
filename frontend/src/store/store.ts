@@ -29,6 +29,35 @@ export interface MockRoute {
     mock?: object;
 }
 
+export interface OpenApiDocument {
+    documentId: string;
+    title?: string;
+    version?: string;
+    description?: string;
+    openApiVersion?: string;
+    basePath?: string;
+    host?: string;
+    schemes?: string[];
+    consumes?: string[];
+    produces?: string[];
+    createdAt: string;
+    updatedAt: string;
+    isActive: boolean;
+}
+
+export interface OpenApiDocumentDetail extends OpenApiDocument {
+    originalJson?: string;
+    // Note: Complex nested data (paths, tags, servers) is stored as raw BSON
+    // and can be parsed from originalJson if needed for display
+}
+
+export interface CreateOpenApiDocument {
+    title?: string;
+    version?: string;
+    description?: string;
+    openApiJson: string;
+}
+
 interface IProckState {
     httpContentTypes: string[],
     getHttpContentTypes: () => void;
@@ -42,6 +71,11 @@ interface IProckState {
     prockConfig: AsyncDataState<ServerConfig>;
     getProckConfigs: () => Promise<void>;
     updateUpstreamUrl: (upstreamUrl: string) => void;
+    openApiDocuments: AsyncDataState<OpenApiDocument[]>;
+    getOpenApiDocuments: () => void;
+    createOpenApiDocument: (document: CreateOpenApiDocument) => void;
+    updateOpenApiDocument: (documentId: string, document: Partial<OpenApiDocument>) => void;
+    deleteOpenApiDocument: (documentId: string) => void;
 }
 
 
@@ -205,6 +239,93 @@ export const useProckStore = create<IProckState>()((set, get) => (
                         const typedError = error as Error;
                         set({ prockConfig: { isLoading: false, isError: true, errorMessage: typedError.message, value: currentConfig } });
                     }
+                }
+            }
+        },
+        openApiDocuments: { isLoading: false, isError: false },
+        getOpenApiDocuments: async () => {
+            set({ openApiDocuments: { isLoading: true, isError: false, value: undefined } });
+            try {
+                const response = await api.fetchOpenApiDocumentsAsync();
+                set({ openApiDocuments: { isLoading: false, isError: false, value: response.data } });
+            }
+            catch (error: unknown) {
+                if (axios.isAxiosError(error)) {
+                    set({ openApiDocuments: { isLoading: false, isError: true, errorMessage: error.message } });
+                    console.error(error.message);
+                } else {
+                    const typedError = error as Error;
+                    set({ openApiDocuments: { isLoading: false, isError: true, errorMessage: typedError.message } });
+                }
+            }
+        },
+        createOpenApiDocument: async (document) => {
+            set({ openApiDocuments: { isLoading: true, isError: false } });
+            const prevDocuments = get().openApiDocuments.value;
+            try {
+                const response = await api.createOpenApiDocumentAsync(document);
+                if (prevDocuments !== undefined) {
+                    set({ openApiDocuments: { isLoading: false, isError: false, value: [...prevDocuments as OpenApiDocument[], response.data] } });
+                } else {
+                    set({ openApiDocuments: { isLoading: false, isError: false, value: [response.data] } });
+                }
+            }
+            catch (error: unknown) {
+                if (axios.isAxiosError(error)) {
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: error.message } });
+                    console.error(error.message);
+                } else {
+                    const typedError = error as Error;
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: typedError.message } });
+                }
+            }
+        },
+        updateOpenApiDocument: async (documentId: string, document: Partial<OpenApiDocument>) => {
+            set({ openApiDocuments: { isLoading: true, isError: false } });
+            const prevDocuments = get().openApiDocuments.value;
+            try {
+                const response = await api.updateOpenApiDocumentAsync(documentId, document);
+                if (prevDocuments !== undefined) {
+                    const updatedDocuments = prevDocuments.map(doc => 
+                        doc.documentId === documentId ? response.data : doc
+                    );
+                    set({ openApiDocuments: { isLoading: false, isError: false, value: updatedDocuments } });
+                } else {
+                    set({ openApiDocuments: { isLoading: false, isError: false, value: [response.data] } });
+                }
+            }
+            catch (error: unknown) {
+                if (axios.isAxiosError(error)) {
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: error.message } });
+                    console.error(error.message);
+                } else {
+                    const typedError = error as Error;
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: typedError.message } });
+                }
+            }
+        },
+        deleteOpenApiDocument: async (documentId: string) => {
+            set({ openApiDocuments: { isLoading: true, isError: false } });
+            const prevDocuments = get().openApiDocuments.value;
+            try {
+                await api.deleteOpenApiDocumentAsync(documentId);
+                if (prevDocuments !== undefined) {
+                    set({
+                        openApiDocuments: {
+                            isLoading: false, isError: false, value: (prevDocuments as OpenApiDocument[]).filter((x) => x.documentId !== documentId)
+                        }
+                    });
+                } else {
+                    set({ openApiDocuments: { isLoading: false, isError: false, value: undefined } });
+                }
+            }
+            catch (error: unknown) {
+                if (axios.isAxiosError(error)) {
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: error.message } });
+                    console.error(error.message);
+                } else {
+                    const typedError = error as Error;
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: typedError.message } });
                 }
             }
         }

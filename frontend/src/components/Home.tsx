@@ -10,7 +10,7 @@ const Home = () => (
             <Card.Body>
                 <h5>Getting Started</h5>
                 <p className="text-muted">
-                    Here&apos;s how to get the most out of Prock. Just use the tabs below:
+                    Here&apos;s how to get the most out of Prock. Just use the tabs above to navigate:
                 </p>
                 <Row>
                     <Col>

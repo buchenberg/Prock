@@ -41,7 +41,7 @@ export default function Config() {
         {prockConfig.value ?
             <Container fluid className='mt-3'>
                 <div className='mb-3'>
-                    <h4>Configuration</h4>
+                    <h4>Proxy Configuration</h4>
                 </div>
                 <Card body>
                     <Row>

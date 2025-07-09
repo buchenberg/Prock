@@ -236,6 +236,8 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
             return TypedResults.BadRequest("Invalid OpenAPI JSON.");
 
         var createdRoutes = new List<MockRouteDto>();
+        var newMockRoutes = new List<MockRoute>();
+        int routeCount = 0;
 
         // For each path and method, create a mock route
         foreach (var path in openApiDoc.Paths)
@@ -248,11 +250,10 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                     Path = path.Key,
                     Method = op.Key.ToString().ToUpper(),
                     HttpStatusCode = 200,
-                    Mock = @"{}", // You can customize this as needed
+                    Mock = "{}", // You can customize this as needed
                     Enabled = true
                 };
-                db.MockRoutes.Add(mockRoute);
-                await db.SaveChangesAsync();
+                newMockRoutes.Add(mockRoute);
                 createdRoutes.Add(new MockRouteDto
                 {
                     RouteId = mockRoute.RouteId,
@@ -262,9 +263,20 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                     Mock = mockRoute.Mock,
                     Enabled = mockRoute.Enabled
                 });
+                routeCount++;
             }
         }
-        
+        db.MockRoutes.AddRange(newMockRoutes);
+        try
+        {
+            await db.SaveChangesAsync();
+            Console.WriteLine($"[INFO] Generated {routeCount} mock routes from OpenAPI document {documentId} at {DateTime.UtcNow:O}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ERROR] Failed to save generated mock routes: {ex.Message}");
+            return TypedResults.BadRequest($"Failed to save generated mock routes: {ex.Message}");
+        }
         return TypedResults.Ok(createdRoutes);
     });
 
@@ -307,13 +319,13 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
             {
                 var serversJson = JsonSerializer.Serialize(parsedDoc.Servers.Select(s => new
                 {
-                    Url = s.Url,
-                    Description = s.Description,
+                    s.Url,
+                    s.Description,
                     Variables = s.Variables?.ToDictionary(kv => kv.Key, kv => new
                     {
-                        Default = kv.Value.Default,
-                        Description = kv.Value.Description,
-                        Enum = kv.Value.Enum
+                        kv.Value.Default,
+                        kv.Value.Description,
+                        kv.Value.Enum
                     })
                 }));
                 //entity.ServersData = BsonDocument.Parse(serversJson);
@@ -333,11 +345,11 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
             {
                 var tagsJson = JsonSerializer.Serialize(parsedDoc.Tags.Select(t => new
                 {
-                    Name = t.Name,
-                    Description = t.Description,
+                    t.Name,
+                    t.Description,
                     ExternalDocs = t.ExternalDocs != null ? new
                     {
-                        Description = t.ExternalDocs.Description,
+                        t.ExternalDocs.Description,
                         Url = t.ExternalDocs.Url?.ToString()
                     } : null
                 }));
@@ -355,11 +367,11 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                             opPair => opPair.Key.ToString().ToUpper(),
                             opPair => new
                             {
-                                OperationId = opPair.Value.OperationId,
-                                Summary = opPair.Value.Summary,
-                                Description = opPair.Value.Description,
+                                opPair.Value.OperationId,
+                                opPair.Value.Summary,
+                                opPair.Value.Description,
                                 Tags = opPair.Value.Tags?.Select(t => t.Name).ToList(),
-                                Deprecated = opPair.Value.Deprecated
+                                opPair.Value.Deprecated
                             })
                     }));
                 //entity.PathsData = BsonDocument.Parse(pathsJson);
@@ -372,9 +384,9 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                 {
                     Schemas = parsedDoc.Components.Schemas?.ToDictionary(
                         kv => kv.Key,
-                        kv => new { 
-                            Type = kv.Value.Type,
-                            Description = kv.Value.Description,
+                        kv => new {
+                            kv.Value.Type,
+                            kv.Value.Description,
                             Properties = kv.Value.Properties?.Keys.ToList()
                         })
                 });

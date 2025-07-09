@@ -88,3 +88,7 @@ export const deleteOpenApiDocumentAsync = (documentId: string) => {
 export const fetchOpenApiDocumentJsonAsync = (documentId: string) => {
     return axios.get<OpenAPI.Document>(`/prock/api/openapi-documents/${documentId}/json`);
 }
+
+export const generateMockRoutesFromOpenApi = (documentId: string) => {
+    return axios.post(`/prock/api/openapi-documents/${documentId}/generate-mock-routes`);
+};

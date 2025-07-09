@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import * as api from '../network/api';
 import axios from 'axios';
 import { AsyncData } from './AsyncData';
+import { generateMockRoutesFromOpenApi } from '../network/api';
 
 export interface StatusCodeSelection {
     [statusCode: string]: string;
@@ -36,6 +37,7 @@ interface ProckStore {
     prockConfig: AsyncData<ServerConfig>;
     getProckConfigs: () => Promise<void>;
     updateUpstreamUrl: (upstreamUrl: string) => void;
+    generateMockRoutesFromOpenApi: (documentId: string) => void;
 }
 
 export const useProckStore = create<ProckStore>()((set, get) => ({
@@ -173,5 +175,21 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
                 }
             }
         }
-    }
+    },
+    generateMockRoutesFromOpenApi: async (documentId: string) => {
+        set({ mockRoutes: { ...get().mockRoutes, isLoading: true } });
+        try {
+            const response = await generateMockRoutesFromOpenApi(documentId);
+            // Merge or replace as needed
+            set({ mockRoutes: { isLoading: false, isError: false, value: response.data } });
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+            set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: error.message } });
+                console.error(error.message);
+            } else {
+                const typedError = error as Error;
+                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: typedError.message } });
+            }
+        }
+    },
 }))

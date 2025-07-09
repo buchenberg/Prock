@@ -1,6 +1,9 @@
 
-import { Modal, Button } from "react-bootstrap";
-import SpecViewer from "./SpecViewer";
+import { Modal, Button, Container } from "react-bootstrap";
+import { JsonView, allExpanded, darkStyles } from "react-json-view-lite";
+import 'react-json-view-lite/dist/index.css';
+import { useEffect } from "react";
+import { useOpenApiStore } from "../../store/useOpenApiStore";
 
 const JsonModal = ({ onHide, showJsonModal, title, documentId }: {
     onHide: () => void;
@@ -8,13 +11,27 @@ const JsonModal = ({ onHide, showJsonModal, title, documentId }: {
     title?: string;
     documentId: string;
 }) => {
+    const { documentDetail, fetchOpenApiJson } = useOpenApiStore();
+
+    useEffect(() => {
+        if (documentId) {
+            fetchOpenApiJson(documentId);
+        }
+    }, [documentId, fetchOpenApiJson]);
+
     return (
-            <Modal show={showJsonModal} fullscreen onHide={onHide} size="lg">
+        <Modal show={showJsonModal} fullscreen onHide={onHide} size="lg">
             <Modal.Header closeButton>
                 <Modal.Title>{title || 'OpenAPI JSON'}</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                <SpecViewer documentId={documentId} />
+                <Container id="json-container">
+                    <JsonView
+                        data={documentDetail.value || ""}
+                        shouldExpandNode={allExpanded}
+                        style={darkStyles}
+                    />
+                </Container>
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide}>

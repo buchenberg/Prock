@@ -1,18 +1,11 @@
-using System.Text.Json;
 using backend.Data;
 using backend.Data.Dto;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Readers;
-using MongoDB.Bson;
 using OpenApiSpecification = backend.Data.Entities.OpenApiSpecification;
-using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi;
-using Microsoft.OpenApi.Interfaces;
-using System.Text.Json.Serialization;
 using backend.Data.Entities;
 
 namespace backend.Endpoints;
@@ -130,12 +123,12 @@ public static class OpenApiEndpoints
                         {
                             Path = p.Path,
                             Summary = p.Summary,
-                            Description = p.Description         
+                            Description = p.Description
                         })]
 
 
                     };
-                    
+
                     return TypedResults.Created($"/prock/api/openapi-documents/{entity.DocumentId}", result);
                 }
                 catch (Exception ex)
@@ -226,6 +219,55 @@ public static class OpenApiEndpoints
                         : TypedResults.BadRequest("Invalid OpenAPI JSON format")
                     : TypedResults.NotFound();
             });
+     
+app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
+    async Task<Results<Ok<List<MockRouteDto>>, NotFound, BadRequest<string>>> (Guid documentId, ProckDbContext db) =>
+    {
+        var document = await db.GetOpenApiDocumentByIdAsync(documentId);
+        if (document == null)
+            return TypedResults.NotFound();
+
+        if (string.IsNullOrEmpty(document.OriginalJson))
+            return TypedResults.BadRequest("No OpenAPI JSON found for this document.");
+
+        // Parse OpenAPI JSON
+        var openApiDoc = ParseOpenApiJson(document.OriginalJson);
+        if (openApiDoc == null)
+            return TypedResults.BadRequest("Invalid OpenAPI JSON.");
+
+        var createdRoutes = new List<MockRouteDto>();
+
+        // For each path and method, create a mock route
+        foreach (var path in openApiDoc.Paths)
+        {
+            foreach (var op in path.Value.Operations)
+            {
+                var mockRoute = new MockRoute
+                {
+                    RouteId = Guid.NewGuid(),
+                    Path = path.Key,
+                    Method = op.Key.ToString().ToUpper(),
+                    HttpStatusCode = 200,
+                    Mock = @"{}", // You can customize this as needed
+                    Enabled = true
+                };
+                db.MockRoutes.Add(mockRoute);
+                await db.SaveChangesAsync();
+                createdRoutes.Add(new MockRouteDto
+                {
+                    RouteId = mockRoute.RouteId,
+                    Path = mockRoute.Path,
+                    Method = mockRoute.Method,
+                    HttpStatusCode = mockRoute.HttpStatusCode,
+                    Mock = mockRoute.Mock,
+                    Enabled = mockRoute.Enabled
+                });
+            }
+        }
+        
+        return TypedResults.Ok(createdRoutes);
+    });
+
     }
 
     private static OpenApiDocument? ParseOpenApiJson(string json)

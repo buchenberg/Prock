@@ -11,6 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 
 import '@scalar/api-reference-react/style.css'
+import Home from './components/Home';
 
 function App() {
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -43,16 +44,6 @@ function App() {
       }
     }
   }
-
-  const Home = () => (
-    <Container className='mt-3' fluid>
-      <Container fluid>
-        <div className='mb-3'>
-          <h4>Hi</h4>
-        </div>
-      </Container>
-    </Container>
-  )
 
   return (
     <>

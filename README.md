@@ -1,98 +1,108 @@
-# About Prock Mocking Proxy
+# Prock Mocking Proxy
 
-Prock is designed to make UI development easier and to eliminate blocking issues caused by one or more API features not being available to develop against. It is essentially a reverse proxy (meaning requests are forwarded upstream) with a mocking feature. You can set an upstream URL to e.g. a QA or Dev environment and use the Prock UI to write simple JSON resonse mocks on routes that you specify. Note that it is very basic and a work in progress. Any suggestions or collaboration would be appreciated.
+**Work in progress**
 
-The service is meant to be run locally, either in a Docker container or in a terminal.
+**Prock** is a developer tool that makes UI and API development easier by acting as a reverse proxy with powerful mocking features. It lets you forward requests to an upstream API (e.g., QA or Dev) and override any route with a custom mock response—no backend changes required.
 
-## Architecture
-The Prock backend uses Microsoft [YARP](https://microsoft.github.io/reverse-proxy/) for request forwarding and acts as a transparent reverse proxy. A request on any route that isn't associated with a mock will simply forward to the upstream URL intact and the response will be returned. Mocks are stored on a MongoDB server in the following format:
+---
 
-```
+## Features
+
+- **Reverse Proxy:** Forwards all requests to your configured upstream API unless a mock is defined.
+- **Mocking:** Easily create, update, and enable/disable JSON response mocks for any route and HTTP method.
+- **OpenAPI Integration:** Upload OpenAPI specs and auto-generate mock routes for all paths.
+- **UI:** Modern React Bootstrap interface for managing mocks and OpenAPI docs.
+- **Persistence:** Mocks and OpenAPI docs are stored in MongoDB.
+- **Easy Setup:** Run locally or in Docker with minimal configuration.
+
+---
+
+## How It Works
+
+- Requests to any route not explicitly mocked are transparently forwarded to your upstream API.
+- Mocks are defined by HTTP method and path. If a mock exists, Prock returns your custom JSON response (status code 200).
+- OpenAPI documents can be uploaded and used to generate mock routes automatically.
+
+---
+
+## Quick Start
+
+### 1. Run with Docker (Recommended)
+
+1. Copy `appsettings.Docker.json.example` to `appsettings.Docker.json` and set your `UpstreamUrl`.
+2. Copy `frontend/.env.example` to `frontend/.env`.
+3. Run:
+   ```sh
+   docker-compose up
+   ```
+4. Visit [http://localhost:8080](http://localhost:8080)
+
+### 2. Run Locally
+
+1. Install [MongoDB Community Edition](https://www.mongodb.com/try/download/community).
+2. Copy and configure `appsettings.json` as needed for your environment.
+3. (Optional) Copy `frontend/.env.example` to `frontend/.env`.
+4. Start backend:
+   ```sh
+   cd backend
+   dotnet run
+   ```
+5. Start frontend:
+   ```sh
+   cd frontend
+   npm install
+   npm run dev
+   ```
+6. Visit the URL shown in the frontend console.
+
+---
+
+## Mocking a Route
+
+1. Go to the **Mocks** tab in the UI.
+2. Click the plus (+) button.
+3. Select HTTP method, enter the path, and provide a JSON response.
+4. Submit to create the mock.  
+   Now, requests to that path will return your mock response!
+
+---
+
+## OpenAPI Integration
+
+- Upload OpenAPI (Swagger) JSON/YAML files in the **OpenAPI** tab.
+- Generate mock routes for all paths in the spec with one click.
+
+---
+
+## Example Mock Route Document
+
+```json
 {
-  "_id": {
-    "$oid": "672d0553f52377a8941eecf8"
-  },
   "enabled": true,
-  "method": "Get",
+  "method": "GET",
   "mock": "{\"hello\":\"mock\"}",
   "path": "/some/path",
-  "routeId": {
-    "$binary": {
-      "base64": "bAvQ077TS3aaDKm+T9yiDg==",
-      "subType": "04"
-    }
-  }
+  "routeId": "bAvQ077TS3aaDKm+T9yiDg=="
 }
 ```
 
+---
 
-The _id field is the internal MongoDb index and isn't returned as part of the DTO. The routeId is used as an identifier in the DTO as a GUID/UUID value. The rest of the fields are fairly self-explanitory. Any GET requests to /foo/api/bar will return a JSON response of `{"hello": "mock"}`. At this point, all responses come back as 200. Custom status codes aren't yet supported.
+## Architecture
 
-The user interface uses [React Bootstrap](https://react-bootstrap.netlify.app/) and a [Vite](https://vite.dev/]) based build environament
+- **Backend:** .NET, [YARP](https://microsoft.github.io/reverse-proxy/) for proxying, MongoDB for storage.
+- **Frontend:** React + Vite + React Bootstrap.
+- **Mocks:** Stored in MongoDB, identified by `routeId` (GUID/UUID).
 
-## Running in a Docker container (recommended)
-Running Prock in a docker environment makes deployment much easier as you don't need a local instance of MongoDb. Assuming that you have Docker Engine running on your development machine, do the following.
-
-- Make a copy of the `appsettings.Docker.json.example` file and remove the `.example` part from the file name.
-- Change the `UpstreamUrl` value to point to the API you are developing against. Here's an example:
-```
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
-    }
-  },
-  "AllowedHosts": "*",
-  "Prock": {
-    "Host": "http://*",
-    "Port": "5001",
-    "UpstreamUrl": "https://example.com",
-    "MongoDbUri": "mongodb://user:pass@database",
-    "DbName": "prock"
-  }
-}
-```
-- Make a copy of the ./frontend/.env.example as /frontend/.env.
-- Don't edit any of the other Prock settings as the ports and etc. need to jive with the docker environment
-- Run `docker-compose up` in a terminal from the root project directory
-- Navigate to http://localhost:8080
-
-## Running Locally
-You'll need [MongoDb Community Edition](https://www.mongodb.com/try/download/community) database server installed locally.
-- Find out what your `ASPNETCORE_ENVIRONMENT` environment variable is set to. It's usually going to be "Local" or "Development" but you can set it to what you want in various ways.
-- Make a copy of `appsettings.json` as `appsettings.Development.json` or `appsettings.Local.json` deponding on what you find
-- The default values should work for a locally installed MongoDb instance. You should only need to change the upstream URL
-- Optionally, make a copy of the ./frontend/.env.example as /frontend/.env and edit as needed.
-- From the ./backend directory run the following in a terminal (or run in your IDE)
-    `dotnet run`
-- From ./frontend directory run the following in a terminal
-    `npm run dev`
-- Note that the Vite development server has it's own proxy in place as in the `vite.config.ts` file so be aware of it if you go fiddling with the backend port
-    ```
-    export default defineConfig({
-    server: {
-        proxy: {
-        "/prock": "http://localhost:5001",
-        }
-    },
-    plugins: [react()]
-    })
-    ```
-- Navigate to the URL shown in the frontend console
-
-## Mocking a route
-- Once you navigate to the UI you should see the following page.
-  ![alt text](/docs/image.png)
-
-- Now navigate to the Mocks tab and click the plus-sign next to the heading
-- Select the method, enter the path, add a JSON formatted response, and click submit
-- You should now have a mock route in place like so
-![alt text](/docs/image-1.png)
-
-You are winning! Now you have a route at http://localhost:5001/some/path that will respond with 200 OK `{"hello": "prock"}`. Build that sweet UI.
+---
 
 ## Alternatives
-Prock isn't the only mocking, proxying, inebriated kung fu master in town. There are viable alternative to accomplish some of the same.
-- [tweak](https://chromewebstore.google.com/detail/tweak-mock-and-modify-htt/feahianecghpnipmhphmfgmpdodhcapi?hl=en) is a Chrome extension that allows you to configure and return mocks right in the browser. Smart.
-- [Mock Server](https://github.com/mock-server/mockserver) is a more feature rich but similar approach written in Java
+
+- [Tweak](https://chromewebstore.google.com/detail/tweak-mock-and-modify-htt/feahianecghpnipmhphmfgmpdodhcapi?hl=en) (Chrome extension)
+- [Mock Server](https://github.com/mock-server/mockserver) (Java, feature-rich)
+
+---
+
+## Contributing
+
+Prock is a work in progress! Suggestions, issues, and PRs are welcome.

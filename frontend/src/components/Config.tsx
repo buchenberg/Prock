@@ -2,13 +2,14 @@
 import './MockRoutes.css';
 import { useEffect, useState } from "react";
 import { Alert, Button, Card, Col, Container, Form, Row, Spinner, Stack } from "react-bootstrap";
-import { AsyncDataState, ServerConfig, useProckStore } from '../store/store';
+import { ServerConfig, useProckStore } from '../store/useProckStore';
+import { AsyncData } from '../store/AsyncData';
 import { PencilSquare } from 'react-bootstrap-icons';
 
 
 
 export default function Config() {
-    const prockConfig: AsyncDataState<ServerConfig> = useProckStore((state) => state.prockConfig);
+    const prockConfig: AsyncData<ServerConfig> = useProckStore((state) => state.prockConfig);
     const getProckConfigs = useProckStore((state) => state.getProckConfigs);
     const updateUpstreamUrl = useProckStore((state) => state.updateUpstreamUrl);
     const [upstreamUrl, setUpstreamUrl] = useState<string>("");
@@ -44,12 +45,12 @@ export default function Config() {
                 </div>
                 <Card body>
                     <Row>
-                        <Col><b>Host</b></Col>
+                        <Col><b>Proxy Host</b></Col>
                         <Col>{prockConfig.value.host ?? ""}</Col>
                     </Row>
                     <hr />
                     <Row>
-                        <Col><b>Port</b></Col>
+                        <Col><b>Proxy Port</b></Col>
                         <Col>{prockConfig.value.port ?? ""}</Col>
                     </Row>
                     <hr />

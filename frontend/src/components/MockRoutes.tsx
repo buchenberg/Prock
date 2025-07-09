@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack } from "react-bootstrap";
 import { PencilSquare, PlusCircle, Trash } from "react-bootstrap-icons";
 import { CodeBlock, obsidian } from "react-code-blocks";
-import { AsyncDataState, MockRoute, useProckStore } from '../store/store';
+import { MockRoute, useProckStore } from '../store/useProckStore';
+import { AsyncData } from '../store/AsyncData';
+import * as api from '../network/api';
 
 
 
 export default function MockRoutes() {
-    const mockRoutes: AsyncDataState<MockRoute[]> = useProckStore((state) => state.mockRoutes);
+    const mockRoutes: AsyncData<MockRoute[]> = useProckStore((state) => state.mockRoutes);
     const getMockRoutes = useProckStore((state) => state.getMockRoutes);
     const createMockRoute = useProckStore((state) => state.createMockRoute);
     const updateMockRoute = useProckStore((state) => state.updateMockRoute);
@@ -152,7 +154,7 @@ export default function MockRoutes() {
                                                 {route.path}
                                             </Card.Title>
                                         </Col>
-                                        {/* <Col xs={2}>
+                                        <Col xs={2}>
                                             <Form.Check
                                                 type="switch"
                                                 id={`${route.routeId}-switch`}
@@ -164,22 +166,12 @@ export default function MockRoutes() {
                                                         return;
                                                     if (!route.enabled) {
                                                         await api.enableRouteAsync(route.routeId);
-                                                        setRoutes(routes.map(x => {
-                                                            if (x.routeId !== route.routeId)
-                                                                return x;
-                                                            return { ...x, enabled: true }
-                                                        }))
                                                     }
                                                     else if (route.enabled) {
                                                         await api.disableRouteAsync(route.routeId);
-                                                        setRoutes(routes.map(x => {
-                                                            if (x.routeId !== route.routeId)
-                                                                return x;
-                                                            return { ...x, enabled: false }
-                                                        }))
                                                     }
                                                 }} />
-                                        </Col> */}
+                                        </Col>
                                     </Row>
                                 </Card.Header>
                                 <Card.Body>

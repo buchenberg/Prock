@@ -39,8 +39,9 @@ builder.Services.AddSwaggerGen(opt => opt.SwaggerDoc("v1", new Microsoft.OpenApi
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+app.UseOpenApi();
+//app.UseSwagger();
+//app.UseSwaggerUI();
 
 
 
@@ -57,6 +58,7 @@ app.MapHub<NotificationHub>("/prock/api/signalr");
 app.RegisterProckEndpoints();
 app.RegisterProxyEndpoints();
 app.RegisterConfigEndpoints();
+app.RegisterOpenApiEndpoints();
 
 
 

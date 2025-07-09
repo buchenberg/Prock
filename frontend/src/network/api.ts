@@ -1,5 +1,6 @@
 import axios from "axios";
-import { MockRoute } from "../store/store";
+import { MockRoute } from "../store/useProckStore";
+import { OpenAPI } from "@scalar/openapi-types";
 
 axios.interceptors.request.use(
     config => {
@@ -51,3 +52,43 @@ export const disableRouteAsync = (routeId: string) => {
 export function updateUpstreamUrlAsync(updatedUrl: string) {
     return axios.put("/prock/api/config/upstream-url", { upstreamUrl: updatedUrl });
 }
+
+// OpenAPI Document API functions
+export const fetchOpenApiDocumentsAsync = () => {
+    return axios.get("/prock/api/openapi-documents");
+}
+
+export const fetchOpenApiDocumentByIdAsync = (documentId: string) => {
+    return axios.get(`/prock/api/openapi-documents/${documentId}`);
+}
+
+export const createOpenApiDocumentAsync = (document: {
+    title?: string;
+    version?: string;
+    description?: string;
+    openApiJson: string;
+}) => {
+    return axios.post("/prock/api/openapi-documents", JSON.stringify(document));
+}
+
+export const updateOpenApiDocumentAsync = (documentId: string, document: {
+    title?: string;
+    version?: string;
+    description?: string;
+    openApiJson?: string;
+    isActive?: boolean;
+}) => {
+    return axios.put(`/prock/api/openapi-documents/${documentId}`, JSON.stringify(document));
+}
+
+export const deleteOpenApiDocumentAsync = (documentId: string) => {
+    return axios.delete(`/prock/api/openapi-documents/${documentId}`);
+}
+
+export const fetchOpenApiDocumentJsonAsync = (documentId: string) => {
+    return axios.get<OpenAPI.Document>(`/prock/api/openapi-documents/${documentId}/json`);
+}
+
+export const generateMockRoutesFromOpenApi = (documentId: string) => {
+    return axios.post(`/prock/api/openapi-documents/${documentId}/generate-mock-routes`);
+};

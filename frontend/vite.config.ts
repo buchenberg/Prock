@@ -8,6 +8,9 @@ export default defineConfig({
       "/prock": "http://localhost:5001",
       "/swagger": "http://localhost:5001",
     },
+    watch: {
+      usePolling: true
+    },
     port: 8080
   },
   plugins: [react()],

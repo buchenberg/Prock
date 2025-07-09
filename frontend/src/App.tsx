@@ -6,8 +6,11 @@ import * as api from './network/api';
 import Config from './components/Config';
 import axios from 'axios';
 import Logs from './components/Logs';
-import OpenApiDocuments from './components/OpenApiDocuments';
+import OpenApiDocuments from './components/OpenApiDocuments/OpenApiDocuments';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+
+import '@scalar/api-reference-react/style.css'
 
 function App() {
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
@@ -81,12 +84,13 @@ function App() {
           <Tab eventKey="#proxy" title="Proxy">
             <Config />
           </Tab>
-          <Tab eventKey="#mocks" title="Mocks">
-            <MockRoutes />
-          </Tab>
           <Tab eventKey="#openapi" title="OpenAPI">
             <OpenApiDocuments />
           </Tab>
+          <Tab eventKey="#mocks" title="Mocks">
+            <MockRoutes />
+          </Tab>
+
           <Tab eventKey="#logs" title="Logs">
             <Logs />
           </Tab>

@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 import * as api from '../network/api';
 import axios from 'axios';
+import { OpenAPI } from '@scalar/openapi-types';
 
 export interface AsyncDataState<T> {
     isLoading: boolean;
     isError: boolean;
     errorMessage?: string;
     value?: T;
+    documentDetail?: OpenAPI.Document; // Added for OpenAPI JSON
 }
 
 export interface StatusCodeSelection {
@@ -46,7 +48,7 @@ export interface OpenApiDocument {
 }
 
 export interface OpenApiDocumentDetail extends OpenApiDocument {
-    originalJson?: string;
+    originalJson?: string; // Original OpenAPI JSON as string or parsed object
     // Note: Complex nested data (paths, tags, servers) is stored as raw BSON
     // and can be parsed from originalJson if needed for display
 }
@@ -76,6 +78,7 @@ interface IProckState {
     createOpenApiDocument: (document: CreateOpenApiDocument) => void;
     updateOpenApiDocument: (documentId: string, document: Partial<OpenApiDocument>) => void;
     deleteOpenApiDocument: (documentId: string) => void;
+    fetchOpenApiJson: (documentId: string) => void;
 }
 
 
@@ -293,6 +296,22 @@ export const useProckStore = create<IProckState>()((set, get) => (
                 } else {
                     set({ openApiDocuments: { isLoading: false, isError: false, value: [response.data] } });
                 }
+            }
+            catch (error: unknown) {
+                if (axios.isAxiosError(error)) {
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: error.message } });
+                    console.error(error.message);
+                } else {
+                    const typedError = error as Error;
+                    set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: true, errorMessage: typedError.message } });
+                }
+            }
+        },
+        fetchOpenApiJson: async (documentId: string) => {
+            set({ openApiDocuments: { ...get().openApiDocuments, isLoading: true, isError: false } });
+            try {
+                const response = await api.fetchOpenApiDocumentJsonAsync(documentId);
+                set({ openApiDocuments: { ...get().openApiDocuments, isLoading: false, isError: false, documentDetail: response.data } });
             }
             catch (error: unknown) {
                 if (axios.isAxiosError(error)) {

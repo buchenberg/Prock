@@ -1,9 +1,15 @@
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace backend.Data.Entities;
 
 public class OpenApiSchema
 {
+    [BsonId]
+    public ObjectId _id { get; set; }
+
+    [BsonElement("oasDocumentId")]
+    public Guid OasDocumentId { get; set; }
     [BsonElement("type")]
     public string? Type { get; set; }
     
@@ -115,6 +121,11 @@ public class OpenApiSchema
 
 public class OpenApiDiscriminator
 {
+    [BsonId]
+    public ObjectId _id { get; set; }
+
+    [BsonElement("oasDocumentId")]
+    public Guid OasDocumentId { get; set; }
     [BsonElement("propertyName")]
     public string? PropertyName { get; set; }
     
@@ -124,6 +135,11 @@ public class OpenApiDiscriminator
 
 public class OpenApiXml
 {
+    [BsonId]
+    public ObjectId _id { get; set; }
+
+    [BsonElement("oasDocumentId")]
+    public Guid OasDocumentId { get; set; }
     [BsonElement("name")]
     public string? Name { get; set; }
     

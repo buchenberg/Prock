@@ -1,19 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-    Button, 
-    Card, 
-    Col, 
-    Container, 
-    Row, 
-    Table, 
-    Modal, 
-    Form, 
-    Alert, 
-    Badge, 
+import 'react18-json-view/src/style.css'
+import {
+    Button,
+    Card,
+    Col,
+    Container,
+    Row,
+    Table,
+    Modal,
+    Form,
+    Alert,
+    Badge,
     Spinner
 } from 'react-bootstrap';
-import { useProckStore } from '../store/store';
-import { OpenApiDocument, CreateOpenApiDocument } from '../store/store';
+import { useProckStore } from '../../store/store';
+import { OpenApiDocument, CreateOpenApiDocument } from '../../store/store';
+import JsonModal from './JsonModal';
 
 const OpenApiDocuments: React.FC = () => {
     const {
@@ -21,11 +23,14 @@ const OpenApiDocuments: React.FC = () => {
         getOpenApiDocuments,
         createOpenApiDocument,
         updateOpenApiDocument,
-        deleteOpenApiDocument
+        deleteOpenApiDocument,
+        fetchOpenApiJson
+
     } = useProckStore();
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showJsonModal, setShowJsonModal] = useState(false);
     const [selectedDocument, setSelectedDocument] = useState<OpenApiDocument | null>(null);
     const [createForm, setCreateForm] = useState<CreateOpenApiDocument>({
         title: '',
@@ -40,10 +45,16 @@ const OpenApiDocuments: React.FC = () => {
         getOpenApiDocuments();
     }, [getOpenApiDocuments]);
 
+    useEffect(() => {
+        if (selectedDocument) {
+            fetchOpenApiJson(selectedDocument.documentId);
+        }
+    }, [fetchOpenApiJson, selectedDocument]);
+
     const handleCreateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setUploadError(null);
-        
+
         if (!createForm.openApiJson.trim()) {
             setUploadError('OpenAPI JSON is required');
             return;
@@ -67,7 +78,7 @@ const OpenApiDocuments: React.FC = () => {
             reader.onload = (event) => {
                 const content = event.target?.result as string;
                 setCreateForm(prev => ({ ...prev, openApiJson: content }));
-                
+
                 // Try to extract title and version from the JSON
                 try {
                     const parsed = JSON.parse(content);
@@ -111,7 +122,7 @@ const OpenApiDocuments: React.FC = () => {
                     <div>
                         <h5>{selectedDocument.title}</h5>
                         <p className="text-muted">{selectedDocument.description}</p>
-                        
+
                         <Row className="mb-3">
                             <Col sm={6}>
                                 <strong>Version:</strong> {selectedDocument.version}
@@ -120,7 +131,7 @@ const OpenApiDocuments: React.FC = () => {
                                 <strong>OpenAPI Version:</strong> {selectedDocument.openApiVersion}
                             </Col>
                         </Row>
-                        
+
                         <Row className="mb-3">
                             <Col sm={6}>
                                 <strong>Created:</strong> {formatDate(selectedDocument.createdAt)}
@@ -155,6 +166,13 @@ const OpenApiDocuments: React.FC = () => {
             <Modal.Footer>
                 <Button variant="secondary" onClick={() => setShowDetailModal(false)}>
                     Close
+                </Button>
+                <Button variant="secondary" onClick={() => {
+                    setShowJsonModal(true);
+                    setShowDetailModal(false);
+                }
+                }>
+                    View JSON
                 </Button>
             </Modal.Footer>
         </Modal>
@@ -269,7 +287,7 @@ const OpenApiDocuments: React.FC = () => {
                 <Form onSubmit={handleCreateSubmit}>
                     <Modal.Body>
                         {uploadError && <Alert variant="danger">{uploadError}</Alert>}
-                        
+
                         <Row className="mb-3">
                             <Col md={6}>
                                 <Form.Group className="mb-3">
@@ -343,6 +361,14 @@ const OpenApiDocuments: React.FC = () => {
             </Modal>
 
             <ViewDocumentModal />
+            <JsonModal
+                title={openApiDocuments.documentDetail?.info?.title }
+                showJsonModal={showJsonModal}
+                documentId={selectedDocument?.documentId || ''}
+                onHide={() => setShowJsonModal(false)}
+            />
+
+            {/* Show JSON Modal */}
         </Container>
     );
 };

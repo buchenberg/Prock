@@ -1,5 +1,6 @@
 import axios from "axios";
 import { MockRoute } from "../store/store";
+import { OpenAPI } from "@scalar/openapi-types";
 
 axios.interceptors.request.use(
     config => {
@@ -85,5 +86,5 @@ export const deleteOpenApiDocumentAsync = (documentId: string) => {
 }
 
 export const fetchOpenApiDocumentJsonAsync = (documentId: string) => {
-    return axios.get(`/prock/api/openapi-documents/${documentId}/json`);
+    return axios.get<OpenAPI.Document>(`/prock/api/openapi-documents/${documentId}/json`);
 }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -42,6 +43,7 @@ public class OpenApiSpecification
     public DateTime CreatedAt { get; set; }
     
     [BsonElement("updatedAt")]
+    [ConcurrencyCheck]
     public DateTime UpdatedAt { get; set; }
     
     [BsonElement("isActive")]
@@ -49,20 +51,20 @@ public class OpenApiSpecification
     
     [BsonElement("originalJson")]
     public string? OriginalJson { get; set; }
-    
+
     // Store complex nested objects as raw BSON to avoid EF Core limitations
     [BsonElement("pathsData")]
-    public BsonDocument? PathsData { get; set; }
+    public List<OpenApiPath> Paths { get; set; } = []; 
+
+    // [BsonElement("componentsData")]
+    // public BsonDocument? ComponentsData { get; set; }
     
-    [BsonElement("componentsData")]
-    public BsonDocument? ComponentsData { get; set; }
+    // [BsonElement("tagsData")]
+    // public BsonDocument? TagsData { get; set; }
     
-    [BsonElement("tagsData")]
-    public BsonDocument? TagsData { get; set; }
+    // [BsonElement("serversData")]
+    // public BsonDocument? ServersData { get; set; }
     
-    [BsonElement("serversData")]
-    public BsonDocument? ServersData { get; set; }
-    
-    [BsonElement("externalDocsData")]
-    public BsonDocument? ExternalDocsData { get; set; }
+    // [BsonElement("externalDocsData")]
+    // public BsonDocument? ExternalDocsData { get; set; }
 }

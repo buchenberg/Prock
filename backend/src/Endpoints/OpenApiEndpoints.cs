@@ -9,15 +9,21 @@ using OpenApiSpecification = backend.Data.Entities.OpenApiSpecification;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Interfaces;
+using System.Text.Json.Serialization;
+using backend.Data.Entities;
 
 namespace backend.Endpoints;
 
 public static class OpenApiEndpoints
 {
+
     public static void RegisterOpenApiEndpoints(this WebApplication app)
     {
         // Get all OpenAPI documents
-        app.MapGet("/prock/api/openapi-documents", 
+        app.MapGet("/prock/api/openapi-documents",
             async Task<Results<Ok<List<OpenApiDocumentDto>>, Ok>> (ProckDbContext db) =>
             await db.OpenApiDocuments.Where(x => x.IsActive).ToListAsync() is List<OpenApiSpecification> documents
                 ? TypedResults.Ok(documents.Select(doc => new OpenApiDocumentDto
@@ -81,22 +87,29 @@ public static class OpenApiEndpoints
                     {
                         return TypedResults.BadRequest("Invalid OpenAPI JSON format");
                     }
+                    var oasDocumentId = Guid.NewGuid();
 
                     var entity = new OpenApiSpecification
                     {
-                        DocumentId = Guid.NewGuid(),
+                        DocumentId = oasDocumentId,
                         Title = request.Title ?? msOpenApiDocument.Info?.Title ?? "Untitled API",
                         Version = request.Version ?? msOpenApiDocument.Info?.Version ?? "1.0.0",
                         Description = request.Description ?? msOpenApiDocument.Info?.Description,
-                        OpenApiVersion = "3.0.0", // Default to 3.0.0, can be extracted from document if needed
+                        OpenApiVersion = "3.0.0",
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
                         IsActive = true,
-                        OriginalJson = request.OpenApiJson
+                        OriginalJson = request.OpenApiJson,
+                        Paths = [.. msOpenApiDocument.Paths.Select(path => new OpenApiPath
+                        {
+                            Path = path.Key,
+                            Description = path.Value.Description,
+                            Summary = path.Value.Summary,
+                        })],
                     };
 
                     // Extract additional information from the parsed document
-                    ExtractOpenApiInformation(entity, msOpenApiDocument);
+                    //ExtractOpenApiInformation(entity, msOpenApiDocument);
 
                     db.OpenApiDocuments.Add(entity);
                     await db.SaveChangesAsync();
@@ -110,14 +123,19 @@ public static class OpenApiEndpoints
                         OpenApiVersion = entity.OpenApiVersion,
                         BasePath = entity.BasePath,
                         Host = entity.Host,
-                        Schemes = entity.Schemes,
-                        Consumes = entity.Consumes,
-                        Produces = entity.Produces,
                         CreatedAt = entity.CreatedAt,
                         UpdatedAt = entity.UpdatedAt,
-                        IsActive = entity.IsActive
-                    };
+                        IsActive = entity.IsActive,
+                        Paths = [.. entity.Paths.Select(p => new OpenApiPathDto
+                        {
+                            Path = p.Path,
+                            Summary = p.Summary,
+                            Description = p.Description         
+                        })]
 
+
+                    };
+                    
                     return TypedResults.Created($"/prock/api/openapi-documents/{entity.DocumentId}", result);
                 }
                 catch (Exception ex)
@@ -146,7 +164,7 @@ public static class OpenApiEndpoints
                             return TypedResults.BadRequest("Invalid OpenAPI JSON format");
                         }
                         entity.OriginalJson = request.OpenApiJson;
-                        ExtractOpenApiInformation(entity, msOpenApiDocument);
+                        //ExtractOpenApiInformation(entity, msOpenApiDocument);
                     }
 
                     entity.Title = request.Title ?? entity.Title;
@@ -166,9 +184,9 @@ public static class OpenApiEndpoints
                         OpenApiVersion = entity.OpenApiVersion,
                         BasePath = entity.BasePath,
                         Host = entity.Host,
-                        Schemes = entity.Schemes,
-                        Consumes = entity.Consumes,
-                        Produces = entity.Produces,
+                        // Schemes = entity.Schemes,
+                        // Consumes = entity.Consumes,
+                        // Produces = entity.Produces,
                         CreatedAt = entity.CreatedAt,
                         UpdatedAt = entity.UpdatedAt,
                         IsActive = entity.IsActive
@@ -200,28 +218,40 @@ public static class OpenApiEndpoints
             });
         // Get OpenAPI JSON for a specific document
         app.MapGet("/prock/api/openapi-documents/{documentId}/json",
-            async Task<IResult> (Guid documentId, ProckDbContext db) => 
-                await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiSpecification document && !string.IsNullOrEmpty(document.OriginalJson)
-                    ? Results.Ok(ParseOpenApiJson(document.OriginalJson))
-                    : TypedResults.NotFound());
+            async Task<Results<Ok<OpenApiDocument>, BadRequest<string>, NotFound>> (Guid documentId, ProckDbContext db) =>
+            {
+                return await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiSpecification document && !string.IsNullOrEmpty(document.OriginalJson)
+                    ? ParseOpenApiJson(document.OriginalJson) is OpenApiDocument parsedDoc
+                        ? TypedResults.Ok(parsedDoc)
+                        : TypedResults.BadRequest("Invalid OpenAPI JSON format")
+                    : TypedResults.NotFound();
+            });
     }
 
     private static OpenApiDocument? ParseOpenApiJson(string json)
     {
+        Console.WriteLine($"OpenAPI document parse attempt for JSON of length {json.Length}");
         try
         {
-            var reader = new OpenApiStringReader();
-            var openApiDocument = reader.Read(json, out var diagnostic);
+            var reader = new OpenApiStringReader(settings: new OpenApiReaderSettings
+            {
+                ReferenceResolution = ReferenceResolutionSetting.DoNotResolveReferences,
+                // LoadExternalRefs = false,
+            });
             
+            var openApiDocument = reader.Read(json, out var diagnostic);
+
             if (diagnostic.Errors.Count > 0)
             {
+                Console.WriteLine($"OpenAPI document parsing errors: {string.Join(", ", diagnostic.Errors.Select(e => e.Message))}");
                 return null;
             }
-            
+            Console.WriteLine($"OpenAPI document parse attempt success!");
             return openApiDocument;
         }
-        catch
+        catch(Exception ex)
         {
+            Console.WriteLine($"Error parsing OpenAPI JSON: {ex.Message}");
             return null;
         }
     }
@@ -244,7 +274,7 @@ public static class OpenApiEndpoints
                         Enum = kv.Value.Enum
                     })
                 }));
-                entity.ServersData = BsonDocument.Parse(serversJson);
+                //entity.ServersData = BsonDocument.Parse(serversJson);
 
                 // Set legacy fields for backward compatibility
                 var firstServer = parsedDoc.Servers.First();
@@ -269,7 +299,7 @@ public static class OpenApiEndpoints
                         Url = t.ExternalDocs.Url?.ToString()
                     } : null
                 }));
-                entity.TagsData = BsonDocument.Parse(tagsJson);
+                //entity.TagsData = BsonDocument.Parse(tagsJson);
             }
 
             // Extract paths and operations and store as BsonDocument
@@ -290,7 +320,7 @@ public static class OpenApiEndpoints
                                 Deprecated = opPair.Value.Deprecated
                             })
                     }));
-                entity.PathsData = BsonDocument.Parse(pathsJson);
+                //entity.PathsData = BsonDocument.Parse(pathsJson);
             }
 
             // Extract components and store as BsonDocument
@@ -306,7 +336,7 @@ public static class OpenApiEndpoints
                             Properties = kv.Value.Properties?.Keys.ToList()
                         })
                 });
-                entity.ComponentsData = BsonDocument.Parse(componentsJson);
+                //entity.ComponentsData = BsonDocument.Parse(componentsJson);
             }
         }
         catch (Exception ex)

@@ -44,12 +44,12 @@ export default function Config() {
                 </div>
                 <Card body>
                     <Row>
-                        <Col><b>Host</b></Col>
+                        <Col><b>Proxy Host</b></Col>
                         <Col>{prockConfig.value.host ?? ""}</Col>
                     </Row>
                     <hr />
                     <Row>
-                        <Col><b>Port</b></Col>
+                        <Col><b>Proxy Port</b></Col>
                         <Col>{prockConfig.value.port ?? ""}</Col>
                     </Row>
                     <hr />

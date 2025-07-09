@@ -81,7 +81,7 @@ function App() {
           <Tab eventKey="#home" title="Home">
             <Home />
           </Tab>
-          <Tab eventKey="#proxy" title="Proxy">
+          <Tab eventKey="#config" title="Configuration">
             <Config />
           </Tab>
           <Tab eventKey="#openapi" title="OpenAPI">

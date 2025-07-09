@@ -56,11 +56,13 @@ const OpenApiDocuments: React.FC = () => {
             <Row className="mb-3">
                 <Col>
                     <h4>OpenAPI Documents</h4>
-                    <p className="text-muted">Manage your OpenAPI specifications</p>
+                    <p className="text-muted">Upload and manage all of your OpenAPI specifications here.</p>
+                    <p className="text-muted">Once you have uploaded a specification document, you can view, edit, delete, or generate mocks from the document.</p>
+
                 </Col>
                 <Col xs="auto">
-                    <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-                        Upload New Document
+                    <Button variant="outline-primary" onClick={() => setShowCreateModal(true)}>
+                        Upload Document
                     </Button>
                 </Col>
             </Row>
@@ -143,10 +145,7 @@ const OpenApiDocuments: React.FC = () => {
                         </Table>
                     ) : (
                         <div className="text-center p-4">
-                            <p className="text-muted">No OpenAPI documents found.</p>
-                            <Button variant="primary" onClick={() => setShowCreateModal(true)}>
-                                Upload Your First Document
-                            </Button>
+                            <Alert variant='warning' className="text-muted">No documents found. Upload one to get started.</Alert>
                         </div>
                     )}
                 </Card.Body>

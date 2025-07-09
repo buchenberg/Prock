@@ -1,7 +1,7 @@
 import { Modal, Row, Col, Badge, Button } from "react-bootstrap";
-import { generateMockRoutesFromOpenApi } from "../../network/api";
 import { OpenApiDocument } from "../../store/useOpenApiStore";
 import { formatDate } from "../../helpers/functions";
+import { useProckStore } from "../../store/useProckStore";
 
 
 
@@ -11,6 +11,7 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
     selectedDocument: OpenApiDocument | null;
     setShowJsonModal: (show: boolean) => void;
 }) => {
+    const { generateMockRoutesFromOpenApi } = useProckStore();
 
     return (
         <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} size="lg">

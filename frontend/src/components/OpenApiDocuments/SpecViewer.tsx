@@ -1,35 +1,29 @@
-
-import { useEffect, useState } from 'react';
-import * as api from '../../network/api';
-import { OpenAPI } from '@scalar/openapi-types';
+import { useEffect } from 'react';
 import { JsonView, allExpanded, darkStyles } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import { Container } from 'react-bootstrap';
+import { useOpenApiStore } from '../../store/useOpenApiStore';
+
 const SpecViewer = ({ documentId }: {
     documentId: string;
 }) => {
-    const [spec, setSpec] = useState<OpenAPI.Document>();
+    const { documentDetail, fetchOpenApiJson } = useOpenApiStore();
 
     useEffect(() => {
-        api.fetchOpenApiDocumentJsonAsync(documentId)
-            .then(response => {
-                if (response.status === 200) {
-                    setSpec({ ...response.data, openapi: response.data.openapi || '3.0.0' } as OpenAPI.Document);
-                } else {
-                    throw new Error(`Failed to fetch OpenAPI document: ${response.statusText}`);
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching OpenAPI document:', error);
-                setSpec(undefined); // Clear spec on error
-            });
-    }, [documentId]);
-
+        if (documentId) {
+            fetchOpenApiJson(documentId);
+        }
+    }, [documentId, fetchOpenApiJson]);
 
     return (
         <Container id="json-container">
-            <JsonView data={spec || ""} shouldExpandNode={allExpanded} style={darkStyles} />
+            <JsonView 
+                data={documentDetail.value || ""} 
+                shouldExpandNode={allExpanded} 
+                style={darkStyles} 
+            />
         </Container>
     );
 };
+
 export default SpecViewer;

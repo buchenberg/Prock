@@ -1,5 +1,5 @@
 import axios from "axios";
-import { MockRoute } from "../store/store";
+import { MockRoute } from "../store/useProckStore";
 import { OpenAPI } from "@scalar/openapi-types";
 
 axios.interceptors.request.use(

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import 'react18-json-view/src/style.css'
 import {
     Button,
     Card,
@@ -13,20 +12,18 @@ import {
     Badge,
     Spinner
 } from 'react-bootstrap';
-import { useProckStore } from '../../store/store';
-import { OpenApiDocument, CreateOpenApiDocument } from '../../store/store';
+import { useOpenApiStore, OpenApiDocument, CreateOpenApiDocument } from '../../store/useOpenApiStore';
 import JsonModal from './JsonModal';
 
 const OpenApiDocuments: React.FC = () => {
     const {
-        openApiDocuments,
-        getOpenApiDocuments,
-        createOpenApiDocument,
-        updateOpenApiDocument,
-        deleteOpenApiDocument,
+        documents,
+        getDocuments,
+        createDocument,
+        updateDocument,
+        deleteDocument,
         fetchOpenApiJson
-
-    } = useProckStore();
+    } = useOpenApiStore();
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
@@ -42,8 +39,8 @@ const OpenApiDocuments: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        getOpenApiDocuments();
-    }, [getOpenApiDocuments]);
+        getDocuments();
+    }, [getDocuments]);
 
     useEffect(() => {
         if (selectedDocument) {
@@ -63,7 +60,7 @@ const OpenApiDocuments: React.FC = () => {
         try {
             // Try to parse JSON to validate it
             JSON.parse(createForm.openApiJson);
-            await createOpenApiDocument(createForm);
+            await createDocument(createForm);
             setShowCreateModal(false);
             setCreateForm({ title: '', version: '', description: '', openApiJson: '' });
         } catch {
@@ -100,12 +97,12 @@ const OpenApiDocuments: React.FC = () => {
 
     const handleDelete = async (documentId: string) => {
         if (window.confirm('Are you sure you want to delete this OpenAPI document?')) {
-            await deleteOpenApiDocument(documentId);
+            await deleteDocument(documentId);
         }
     };
 
     const handleToggleActive = async (document: OpenApiDocument) => {
-        await updateOpenApiDocument(document.documentId, { isActive: !document.isActive });
+        await updateDocument(document.documentId, { isActive: !document.isActive });
     };
 
     const formatDate = (dateString: string) => {
@@ -192,21 +189,21 @@ const OpenApiDocuments: React.FC = () => {
                 </Col>
             </Row>
 
-            {openApiDocuments.isError && (
+            {documents.isError && (
                 <Alert variant="danger">
-                    Error loading documents: {openApiDocuments.errorMessage}
+                    Error uploading document: {documents.errorMessage}
                 </Alert>
             )}
 
             <Card>
                 <Card.Body>
-                    {openApiDocuments.isLoading ? (
+                    {documents.isLoading ? (
                         <div className="text-center p-4">
                             <Spinner animation="border" role="status">
                                 <span className="visually-hidden">Loading...</span>
                             </Spinner>
                         </div>
-                    ) : openApiDocuments.value && openApiDocuments.value.length > 0 ? (
+                    ) : documents.value && documents.value.length > 0 ? (
                         <Table striped hover responsive>
                             <thead>
                                 <tr>
@@ -219,7 +216,7 @@ const OpenApiDocuments: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {openApiDocuments.value.map((doc) => (
+                                {documents.value.map((doc: OpenApiDocument) => (
                                     <tr key={doc.documentId}>
                                         <td>
                                             <strong>{doc.title || 'Untitled'}</strong>
@@ -362,13 +359,11 @@ const OpenApiDocuments: React.FC = () => {
 
             <ViewDocumentModal />
             <JsonModal
-                title={openApiDocuments.documentDetail?.info?.title }
+                title={documents.value?.find(d => d.documentId === selectedDocument?.documentId)?.title || ''}
                 showJsonModal={showJsonModal}
                 documentId={selectedDocument?.documentId || ''}
                 onHide={() => setShowJsonModal(false)}
             />
-
-            {/* Show JSON Modal */}
         </Container>
     );
 };

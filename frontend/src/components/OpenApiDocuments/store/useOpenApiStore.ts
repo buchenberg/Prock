@@ -1,8 +1,8 @@
 import { create } from 'zustand'
-import * as api from '../network/api';
+import * as api from '../../../network/api';
 import axios from 'axios';
 import { OpenAPI } from '@scalar/openapi-types';
-import { AsyncData } from './AsyncData';
+import { AsyncData } from '../../../store/AsyncData';
 
 export interface OpenApiDocument {
     documentId: string;

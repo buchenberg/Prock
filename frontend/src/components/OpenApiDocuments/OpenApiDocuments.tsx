@@ -10,11 +10,11 @@ import {
     Badge,
     Spinner
 } from 'react-bootstrap';
-import { useOpenApiStore, OpenApiDocument } from '../../store/useOpenApiStore';
 import JsonModal from './JsonModal';
 import { formatDate } from '../../helpers/functions';
 import ViewDocumentModal from './ViewDocumentModal';
 import CreateDocumentModal from './CreateDocumentModal';
+import { useOpenApiStore, OpenApiDocument } from './store/useOpenApiStore';
 
 const OpenApiDocuments: React.FC = () => {
     const {

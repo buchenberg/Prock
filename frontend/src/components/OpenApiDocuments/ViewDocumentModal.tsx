@@ -1,7 +1,7 @@
 import { Modal, Row, Col, Badge, Button } from "react-bootstrap";
-import { OpenApiDocument } from "../../store/useOpenApiStore";
 import { formatDate } from "../../helpers/functions";
 import { useProckStore } from "../../store/useProckStore";
+import { OpenApiDocument } from "./store/useOpenApiStore";
 
 
 

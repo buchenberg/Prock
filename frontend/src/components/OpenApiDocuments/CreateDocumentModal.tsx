@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Modal, Form, Alert, Row, Col, Button } from "react-bootstrap";
-import { CreateOpenApiDocument, useOpenApiStore } from "../../store/useOpenApiStore";
+import { useOpenApiStore, CreateOpenApiDocument } from "./store/useOpenApiStore";
+
 
 const CreateDocumentModal = ({ show, onHide }: {
     show: boolean;

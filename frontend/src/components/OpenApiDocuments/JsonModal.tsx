@@ -3,7 +3,7 @@ import { Modal, Button, Container } from "react-bootstrap";
 import { JsonView, allExpanded, darkStyles } from "react-json-view-lite";
 import 'react-json-view-lite/dist/index.css';
 import { useEffect } from "react";
-import { useOpenApiStore } from "../../store/useOpenApiStore";
+import { useOpenApiStore } from "./store/useOpenApiStore";
 
 const JsonModal = ({ onHide, showJsonModal, title, documentId }: {
     onHide: () => void;

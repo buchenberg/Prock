@@ -1,4 +1,4 @@
-namespace backend.Data.Dto;
+namespace Prock.Backend.Data.Dto;
 
 /// <summary>
 /// Represents a summary of an OpenAPI document.

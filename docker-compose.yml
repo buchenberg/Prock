@@ -6,7 +6,7 @@ services:
       - MONGODB_CONNECTION_STRING=mongodb://user:pass@database
       - ASPNETCORE_ENVIRONMENT=Docker
     build:
-      context: ./backend/
+      context: ./Backend/
       dockerfile: ./.docker/Dockerfile
     ports:
       - 5001:5001
@@ -50,7 +50,26 @@ services:
        procknet:
         aliases:
           - database
+  mariadb:
+    image: mariadb:latest
+    restart: always
+    container_name: mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: mockula
+      MYSQL_DATABASE: mockula
+    ports:
+      - "3306:3306"
+    volumes:
+      # persist data files into `datadir` volume managed by docker
+      - datadir:/var/lib/mysql
+      # bind-mount any sql files that should be run while initializing
+      - ./database/.docker/mariadb-entrypoint:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      procknet:
+        aliases:
+          - mariadb
 volumes:
+  datadir:
   mongodb:
   mongoconfig:
 networks:

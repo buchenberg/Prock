@@ -1,11 +1,11 @@
 ﻿using System.Text.Json;
-using backend.Data;
+using Prock.Backend.Data;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Yarp.ReverseProxy.Forwarder;
 
-namespace backend.Endpoints;
+namespace Prock.Backend.Endpoints;
 
 public static class ProxyEndpoints
 {
@@ -13,13 +13,13 @@ public static class ProxyEndpoints
     {
         var defaultUpstreamUrl = app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ?? "https://example.com";
 
-        app.Map("/{**catch-all}", async Task<Results<ContentHttpResult, ProblemHttpResult, EmptyHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, ProckDbContext db, HttpMessageInvoker httpClient) =>
+        app.Map("/{**catch-all}", async Task<Results<ContentHttpResult, ProblemHttpResult, EmptyHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, ProckDbContext db, MariaDbContext mariaDbContext, HttpMessageInvoker httpClient) =>
         {
             var requestPath = httpContext.Request.Path.Value;
             var requestMethod = httpContext.Request.Method;
             await hub.Clients.All.SendAsync("ProxyRequest", $"Request {requestMethod} {requestPath}");
 
-            var mock = await db.MockRoutes.SingleOrDefaultAsync(x =>
+            var mock = await mariaDbContext.MockRoutes.SingleOrDefaultAsync(x =>
                 string.Equals(x.Path, requestPath, StringComparison.CurrentCultureIgnoreCase)
                 && string.Equals(x.Method, requestMethod, StringComparison.CurrentCultureIgnoreCase)
                 && x.Enabled);

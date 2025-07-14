@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace backend.Data.Entities;
+namespace Prock.Backend.Data.Entities;
 
 public class OpenApiSpecification
 {

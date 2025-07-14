@@ -1,10 +1,11 @@
-using backend.Data;
-using backend.Data.Dto;
-using backend.Data.Entities;
+using Prock.Backend.Data;
+using Prock.Backend.Data.Dto;
+using Prock.Backend.Data.Entities;
+using Prock.Backend.src.Data.MariaDb;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace backend.Endpoints;
+namespace Prock.Backend.Endpoints;
 
 public static class ConfigEndpoints
 {
@@ -34,8 +35,41 @@ public static class ConfigEndpoints
             var upstreamUrl = config.UpstreamUrl ?? "unknown";
             return TypedResults.Ok(new { connectionString, upstreamUrl, host, port });
         });
-        app.MapPut("/prock/api/config/upstream-url", async (ProckConfigDto update, ProckDbContext db, CancellationToken cancellationToken) =>
+        app.MapPut("/prock/api/config/upstream-url", async (ProckConfigDto update, ProckDbContext db, MariaDbContext mariaDbContext, CancellationToken cancellationToken) =>
         {
+
+            app.Logger.LogInformation("Updating upstream URL to {UpstreamUrl}", update.UpstreamUrl);
+            if (string.IsNullOrWhiteSpace(update.UpstreamUrl))
+            {
+                return Results.BadRequest("Upstream URL cannot be empty.");
+            }
+            // Check if the widget exists
+            var existingWidget = await mariaDbContext.Widgets.FirstOrDefaultAsync((x) => x.Name == "Default Widget", cancellationToken);
+            if (existingWidget == null)
+            {
+                app.Logger.LogInformation("Creating default widget");
+                var widget = new Widget()
+                {
+                    Name = "Default Widget",
+                    Description = "This is a default widget.",
+                };
+                mariaDbContext.Widgets.Add(widget);
+                await mariaDbContext.SaveChangesAsync(cancellationToken);
+            }
+            else
+            {
+                app.Logger.LogInformation("Updating existing widget");
+                existingWidget.Name = "Updated Widget";
+                existingWidget.Description = "This widget has been updated.";
+                var widget = new Widget()
+                {
+                    Name = "Default Widget",
+                    Description = "This is a default widget.",
+                };
+                mariaDbContext.Widgets.Add(widget);
+                await mariaDbContext.SaveChangesAsync(cancellationToken);
+            }
+            // end widget stuff
             var config = await db.ProckConfig.SingleOrDefaultAsync(cancellationToken);
             if (config == null)
             {

@@ -1,13 +1,12 @@
-﻿using backend.Data.Entities;
+﻿using Prock.Backend.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using MongoDB.EntityFrameworkCore.Extensions;
 
-namespace backend.Data;
+namespace Prock.Backend.Data;
 
 public class ProckDbContext : DbContext
 {
-    public DbSet<MockRoute> MockRoutes { get; init; }
     public DbSet<ProckConfig> ProckConfig { get; init; }
     public DbSet<OpenApiSpecification> OpenApiDocuments { get; init; }
     public static ProckDbContext Create(IMongoDatabase database) =>
@@ -23,7 +22,6 @@ public class ProckDbContext : DbContext
         base.OnModelCreating(modelBuilder);
         
         // Configure collections
-        modelBuilder.Entity<MockRoute>().ToCollection("mockRoutes");
         modelBuilder.Entity<ProckConfig>().ToCollection("prockConfig");
         modelBuilder.Entity<OpenApiSpecification>().ToCollection("openApiDocuments");
         
@@ -53,13 +51,7 @@ public class ProckDbContext : DbContext
         //     // entity.Ignore(e => e.ServersData);
         //     // entity.Ignore(e => e.ExternalDocsData);
         // });
-        
-        // Configure MockRoute entity
-        modelBuilder.Entity<MockRoute>(entity =>
-        {
-            entity.HasKey(e => e._id);
-            entity.Property(e => e.RouteId);
-        });
+    
         
         // Configure ProckConfig entity
         modelBuilder.Entity<ProckConfig>(entity =>

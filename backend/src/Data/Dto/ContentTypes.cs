@@ -1,4 +1,4 @@
-namespace backend.Data.Dto;
+namespace Prock.Backend.Data.Dto;
 public static class ContentTypes
 {
     public const string ApplicationJavascript = "application/javascript";

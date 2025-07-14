@@ -118,6 +118,7 @@ src/.vs/config/applicationhost.config
 .idea/
 /appsettings.Development.json
 /appsettings.Local.json
+/appsettings.Production.json
 .vscode/
 Properties/
 .env

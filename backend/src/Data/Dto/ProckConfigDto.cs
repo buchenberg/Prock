@@ -1,4 +1,4 @@
-﻿namespace backend.Data.Dto;
+﻿namespace Prock.Backend.Data.Dto;
 
 public class ProckConfigDto
 {

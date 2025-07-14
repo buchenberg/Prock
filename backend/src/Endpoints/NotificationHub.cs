@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 
-namespace backend.Endpoints;
+namespace Prock.Backend.Endpoints;
 
 public class NotificationHub : Hub;

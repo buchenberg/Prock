@@ -1,51 +1,66 @@
 ﻿using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
-using backend.Data;
-using backend.Data.Dto;
-using backend.Data.Entities;
+using Prock.Backend.Data.Dto;
+using Prock.Backend.src.Data.MariaDb;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace backend.Endpoints;
 
-public static class ProckEndpoints
+namespace Prock.Backend.Endpoints;
+
+public static class MockRouteEndpoints
 {
     private static readonly string[] HttpMethods = [
         "GET", "PUT", "POST", "PATCH", "DELETE"
         ];
 
-    public static void RegisterProckEndpoints(this WebApplication app)
+    public static void RegisterMockRouteEndpoints(this WebApplication app)
     {
 
-        app.MapGet("/prock/api/mock-routes", async Task<Results<Ok<List<MockRouteDto>>, Ok>> (ProckDbContext db) =>
-            await db.MockRoutes.ToListAsync() is List<MockRoute> response
-                ? TypedResults.Ok(response.Select(x => new MockRouteDto()
+        app.MapGet("/prock/api/mock-routes", async Task<Results<Ok<List<MockRouteDto>>, Ok>> (MariaDbContext db) =>
+        {
+            var response = await db.MockRoutes.ToListAsync();
+            if (response != null && response.Count > 0)
+            {
+                return TypedResults.Ok(response.Select(x => new MockRouteDto()
                 {
-                    RouteId = x.RouteId,
+                    RouteId = Guid.Parse(x.RouteId),
                     Method = x.Method,
                     Path = x.Path,
                     HttpStatusCode = x.HttpStatusCode,
-                    Mock = x.Mock != null ? JsonSerializer.Deserialize<dynamic>(x.Mock) : null,
+                    Mock = x.Mock ?? null,
                     Enabled = x.Enabled
-                }).ToList()
-                )
-                : TypedResults.Ok());
+                }).ToList());
+            }
+            else
+            {
+                return TypedResults.Ok();
+            }
+        });
 
 
         app.MapGet("/prock/api/mock-routes/{routeId}",
-            async Task<Results<Ok<MockRouteDto>, NotFound>> (Guid routeId, ProckDbContext db) =>
-                await db.MockRoutes.SingleOrDefaultAsync(x => x.RouteId == routeId) is MockRoute response
-                    ? TypedResults.Ok(new MockRouteDto()
+            async Task<Results<Ok<MockRouteDto>, NotFound>> (Guid routeId, MariaDbContext db) =>
+            {
+                var response = await db.MockRoutes.SingleOrDefaultAsync(x => x.RouteId == routeId.ToString());
+                if (response != null)
+                {
+                    return TypedResults.Ok(new MockRouteDto()
                     {
-                        RouteId = response.RouteId,
+                        RouteId = Guid.Parse(response.RouteId),
                         Method = response.Method,
                         Path = response.Path,
                         HttpStatusCode = response.HttpStatusCode,
                         Mock = response.Mock != null ? JsonSerializer.Deserialize<dynamic>(response.Mock) : null,
                         Enabled = response.Enabled
-                    })
-                    : TypedResults.NotFound());
+                    });
+                }
+                else
+                {
+                    return TypedResults.NotFound();
+                }
+            });
 
         app.MapGet("/prock/api/http-status-codes",
             () =>
@@ -69,7 +84,7 @@ public static class ProckEndpoints
        );
 
         app.MapPost("/prock/api/mock-routes",
-            async (MockRouteDto route, ProckDbContext db, CancellationToken cancellationToken) =>
+            async (MockRouteDto route, MariaDbContext db, CancellationToken cancellationToken) =>
         {
             route.Method = (route.Method ?? string.Empty).ToUpper();
 
@@ -80,7 +95,7 @@ public static class ProckEndpoints
 
             var result = new MockRoute
             {
-                RouteId = Guid.NewGuid(),
+                RouteId = Guid.NewGuid().ToString(),
                 Method = route.Method,
                 Path = route.Path,
                 HttpStatusCode = route.HttpStatusCode,
@@ -94,16 +109,16 @@ public static class ProckEndpoints
 
             app.Logger.LogInformation("Saved {Path} as {Id}", result.Path, result.RouteId);
 
-            route.RouteId = result.RouteId;
+            route.RouteId = Guid.Parse(result.RouteId);
 
             return TypedResults.Created($"/prock/api/mock-routes/{result.RouteId}", route);
         });
 
         app.MapPut("/prock/api/mock-routes/{routeId}/disable-route",
-            async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, ProckDbContext db, CancellationToken cancellationToken) =>
+            async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, MariaDbContext db, CancellationToken cancellationToken) =>
         {
 
-            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
+            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId.ToString());
 
             if (persistedRoute == null)
             {
@@ -118,7 +133,7 @@ public static class ProckEndpoints
 
             var response = new MockRouteDto
             {
-                RouteId = persistedRoute.RouteId,
+                RouteId = Guid.Parse(persistedRoute.RouteId),
                 Method = persistedRoute.Method,
                 Path = persistedRoute.Path,
                 HttpStatusCode = persistedRoute.HttpStatusCode,
@@ -130,10 +145,10 @@ public static class ProckEndpoints
         });
 
         app.MapPut("/prock/api/mock-routes/{routeId}/enable-route",
-            async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, ProckDbContext db, CancellationToken cancellationToken) =>
+            async Task<Results<Ok<MockRouteDto>, NotFound<Guid>>> (Guid routeId, MariaDbContext db, CancellationToken cancellationToken) =>
             {
 
-                var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
+                var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId.ToString());
 
                 if (persistedRoute == null)
                 {
@@ -148,7 +163,7 @@ public static class ProckEndpoints
 
                 var response = new MockRouteDto
                 {
-                    RouteId = persistedRoute.RouteId,
+                    RouteId = Guid.Parse(persistedRoute.RouteId),
                     Method = persistedRoute.Method,
                     Path = persistedRoute.Path,
                     HttpStatusCode = persistedRoute.HttpStatusCode,
@@ -159,7 +174,7 @@ public static class ProckEndpoints
                 return TypedResults.Ok(response);
             });
 
-        app.MapPut("/prock/api/mock-routes", async Task<Results<Ok<MockRouteDto>, BadRequest<string>>> (MockRouteDto route, ProckDbContext db, CancellationToken cancellationToken) =>
+        app.MapPut("/prock/api/mock-routes", async Task<Results<Ok<MockRouteDto>, BadRequest<string>>> (MockRouteDto route, MariaDbContext db, CancellationToken cancellationToken) =>
         {
 
             if (HttpMethods.All(x => x != route.Method))
@@ -169,7 +184,7 @@ public static class ProckEndpoints
 
 
             app.Logger.LogInformation("Updating {Path} ...", route.Path);
-            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == route.RouteId);
+            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == route.RouteId.ToString());
             if (persistedRoute == null)
             {
                 return TypedResults.BadRequest($"Route {route.RouteId} not found");
@@ -187,9 +202,9 @@ public static class ProckEndpoints
             return TypedResults.Ok(route);
         });
 
-        app.MapDelete("/prock/api/mock-routes/{routeId}", async Task<Results<Ok, NotFound>> (Guid routeId, ProckDbContext db) =>
+        app.MapDelete("/prock/api/mock-routes/{routeId}", async Task<Results<Ok, NotFound>> (Guid routeId, MariaDbContext db) =>
         {
-            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
+            var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId.ToString());
             if (persistedRoute == null)
             {
                 return TypedResults.NotFound();

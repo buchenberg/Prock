@@ -1,14 +1,14 @@
-using backend.Data;
-using backend.Data.Dto;
+using Prock.Backend.Data;
+using Prock.Backend.Data.Dto;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Readers;
-using OpenApiSpecification = backend.Data.Entities.OpenApiSpecification;
+using OpenApiSpecification = Prock.Backend.Data.Entities.OpenApiSpecification;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 using Microsoft.OpenApi.Models;
-using backend.Data.Entities;
+using Prock.Backend.Data.Entities;
 
-namespace backend.Endpoints;
+namespace Prock.Backend.Endpoints;
 
 public static class OpenApiEndpoints
 {
@@ -28,9 +28,9 @@ public static class OpenApiEndpoints
                     OpenApiVersion = doc.OpenApiVersion,
                     BasePath = doc.BasePath,
                     Host = doc.Host,
-                    Schemes = doc.Schemes,
-                    Consumes = doc.Consumes,
-                    Produces = doc.Produces,
+                    Schemes = doc.Schemes ?? new List<string>(),
+                    Consumes = doc.Consumes ?? new List<string>(),
+                    Produces = doc.Produces ?? new List<string>(),
                     CreatedAt = doc.CreatedAt,
                     UpdatedAt = doc.UpdatedAt,
                     IsActive = doc.IsActive
@@ -50,9 +50,9 @@ public static class OpenApiEndpoints
                         OpenApiVersion = document.OpenApiVersion,
                         BasePath = document.BasePath,
                         Host = document.Host,
-                        Schemes = document.Schemes,
-                        Consumes = document.Consumes,
-                        Produces = document.Produces,
+                  Schemes = document.Schemes ?? new List<string>(),
+                    Consumes = document.Consumes ?? new List<string>(),
+                    Produces = document.Produces ?? new List<string>(),
                         CreatedAt = document.CreatedAt,
                         UpdatedAt = document.UpdatedAt,
                         IsActive = document.IsActive,
@@ -221,7 +221,7 @@ public static class OpenApiEndpoints
             });
      
 app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
-    async Task<Results<Ok<List<MockRouteDto>>, NotFound, BadRequest<string>>> (Guid documentId, ProckDbContext db) =>
+    async Task<Results<Ok<List<MockRouteDto>>, NotFound, BadRequest<string>>> (Guid documentId, ProckDbContext db, MariaDbContext mariaDbContext) =>
     {
         var document = await db.GetOpenApiDocumentByIdAsync(documentId);
         if (document == null)
@@ -236,7 +236,7 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
             return TypedResults.BadRequest("Invalid OpenAPI JSON.");
 
         var createdRoutes = new List<MockRouteDto>();
-        var newMockRoutes = new List<MockRoute>();
+        var newMockRoutes = new List<src.Data.MariaDb.MockRoute>();
         int routeCount = 0;
 
         // For each path and method, create a mock route
@@ -244,9 +244,9 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
         {
             foreach (var op in path.Value.Operations)
             {
-                var mockRoute = new MockRoute
+                var mockRoute = new src.Data.MariaDb.MockRoute
                 {
-                    RouteId = Guid.NewGuid(),
+                    RouteId = Guid.NewGuid().ToString(),
                     Path = path.Key,
                     Method = op.Key.ToString().ToUpper(),
                     HttpStatusCode = 200,
@@ -256,7 +256,7 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                 newMockRoutes.Add(mockRoute);
                 createdRoutes.Add(new MockRouteDto
                 {
-                    RouteId = mockRoute.RouteId,
+                    RouteId = Guid.Parse(mockRoute.RouteId),
                     Path = mockRoute.Path,
                     Method = mockRoute.Method,
                     HttpStatusCode = mockRoute.HttpStatusCode,
@@ -266,10 +266,10 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                 routeCount++;
             }
         }
-        db.MockRoutes.AddRange(newMockRoutes);
+        mariaDbContext.MockRoutes.AddRange(newMockRoutes);
         try
         {
-            await db.SaveChangesAsync();
+            await mariaDbContext.SaveChangesAsync();
             Console.WriteLine($"[INFO] Generated {routeCount} mock routes from OpenAPI document {documentId} at {DateTime.UtcNow:O}");
         }
         catch (Exception ex)

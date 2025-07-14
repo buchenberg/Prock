@@ -50,9 +50,9 @@ public static class OpenApiEndpoints
                         OpenApiVersion = document.OpenApiVersion,
                         BasePath = document.BasePath,
                         Host = document.Host,
-                  Schemes = document.Schemes ?? new List<string>(),
-                    Consumes = document.Consumes ?? new List<string>(),
-                    Produces = document.Produces ?? new List<string>(),
+                        Schemes = document.Schemes ?? new List<string>(),
+                        Consumes = document.Consumes ?? new List<string>(),
+                        Produces = document.Produces ?? new List<string>(),
                         CreatedAt = document.CreatedAt,
                         UpdatedAt = document.UpdatedAt,
                         IsActive = document.IsActive,
@@ -219,66 +219,67 @@ public static class OpenApiEndpoints
                         : TypedResults.BadRequest("Invalid OpenAPI JSON format")
                     : TypedResults.NotFound();
             });
-     
-app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
-    async Task<Results<Ok<List<MockRouteDto>>, NotFound, BadRequest<string>>> (Guid documentId, ProckDbContext db, MariaDbContext mariaDbContext) =>
-    {
-        var document = await db.GetOpenApiDocumentByIdAsync(documentId);
-        if (document == null)
-            return TypedResults.NotFound();
-
-        if (string.IsNullOrEmpty(document.OriginalJson))
-            return TypedResults.BadRequest("No OpenAPI JSON found for this document.");
-
-        // Parse OpenAPI JSON
-        var openApiDoc = ParseOpenApiJson(document.OriginalJson);
-        if (openApiDoc == null)
-            return TypedResults.BadRequest("Invalid OpenAPI JSON.");
-
-        var createdRoutes = new List<MockRouteDto>();
-        var newMockRoutes = new List<src.Data.MariaDb.MockRoute>();
-        int routeCount = 0;
-
-        // For each path and method, create a mock route
-        foreach (var path in openApiDoc.Paths)
-        {
-            foreach (var op in path.Value.Operations)
+        // Generate mock routes from OpenAPI document
+        app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
+            async Task<Results<Ok<List<MockRouteDto>>, NotFound, BadRequest<string>>> (Guid documentId, ProckDbContext db, MariaDbContext mariaDbContext) =>
             {
-                var mockRoute = new src.Data.MariaDb.MockRoute
+                var document = await db.GetOpenApiDocumentByIdAsync(documentId);
+                if (document == null)
+                    return TypedResults.NotFound();
+
+                if (string.IsNullOrEmpty(document.OriginalJson))
+                    return TypedResults.BadRequest("No OpenAPI JSON found for this document.");
+
+                // Parse OpenAPI JSON
+                var openApiDoc = ParseOpenApiJson(document.OriginalJson);
+                if (openApiDoc == null)
+                    return TypedResults.BadRequest("Invalid OpenAPI JSON.");
+
+                var createdRoutes = new List<MockRouteDto>();
+                var newMockRoutes = new List<src.Data.MariaDb.MockRoute>();
+                int routeCount = 0;
+
+                // For each path and method, create a mock route
+                foreach (var path in openApiDoc.Paths)
                 {
-                    RouteId = Guid.NewGuid().ToString(),
-                    Path = path.Key,
-                    Method = op.Key.ToString().ToUpper(),
-                    HttpStatusCode = 200,
-                    Mock = "{}", // You can customize this as needed
-                    Enabled = true
-                };
-                newMockRoutes.Add(mockRoute);
-                createdRoutes.Add(new MockRouteDto
+                    foreach (var op in path.Value.Operations)
+                    {
+                        var mockRoute = new src.Data.MariaDb.MockRoute
+                        {
+                            RouteId = Guid.NewGuid().ToString(),
+                            Path = path.Key,
+                            Method = op.Key.ToString().ToUpper(),
+                            HttpStatusCode = 200,
+                            // TODO: Generate a mock response based on the operation
+                            Mock = @$"{{ ""message"": ""Mock response for {op.Key} {path.Key}"" }}",
+                            Enabled = true
+                        };
+                        newMockRoutes.Add(mockRoute);
+                        createdRoutes.Add(new MockRouteDto
+                        {
+                            RouteId = Guid.Parse(mockRoute.RouteId),
+                            Path = mockRoute.Path,
+                            Method = mockRoute.Method,
+                            HttpStatusCode = mockRoute.HttpStatusCode,
+                            Mock = JsonSerializer.Deserialize<dynamic>(mockRoute.Mock),
+                            Enabled = mockRoute.Enabled
+                        });
+                        routeCount++;
+                    }
+                }
+                mariaDbContext.MockRoutes.AddRange(newMockRoutes);
+                try
                 {
-                    RouteId = Guid.Parse(mockRoute.RouteId),
-                    Path = mockRoute.Path,
-                    Method = mockRoute.Method,
-                    HttpStatusCode = mockRoute.HttpStatusCode,
-                    Mock = mockRoute.Mock,
-                    Enabled = mockRoute.Enabled
-                });
-                routeCount++;
-            }
-        }
-        mariaDbContext.MockRoutes.AddRange(newMockRoutes);
-        try
-        {
-            await mariaDbContext.SaveChangesAsync();
-            Console.WriteLine($"[INFO] Generated {routeCount} mock routes from OpenAPI document {documentId} at {DateTime.UtcNow:O}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[ERROR] Failed to save generated mock routes: {ex.Message}");
-            return TypedResults.BadRequest($"Failed to save generated mock routes: {ex.Message}");
-        }
-        return TypedResults.Ok(createdRoutes);
-    });
+                    await mariaDbContext.SaveChangesAsync();
+                    Console.WriteLine($"[INFO] Generated {routeCount} mock routes from OpenAPI document {documentId} at {DateTime.UtcNow:O}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Failed to save generated mock routes: {ex.Message}");
+                    return TypedResults.BadRequest($"Failed to save generated mock routes: {ex.Message}");
+                }
+                return TypedResults.Ok(createdRoutes);
+            });
 
     }
 
@@ -292,7 +293,7 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                 ReferenceResolution = ReferenceResolutionSetting.DoNotResolveReferences,
                 // LoadExternalRefs = false,
             });
-            
+
             var openApiDocument = reader.Read(json, out var diagnostic);
 
             if (diagnostic.Errors.Count > 0)
@@ -303,7 +304,7 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
             Console.WriteLine($"OpenAPI document parse attempt success!");
             return openApiDocument;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine($"Error parsing OpenAPI JSON: {ex.Message}");
             return null;
@@ -384,7 +385,8 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                 {
                     Schemas = parsedDoc.Components.Schemas?.ToDictionary(
                         kv => kv.Key,
-                        kv => new {
+                        kv => new
+                        {
                             kv.Value.Type,
                             kv.Value.Description,
                             Properties = kv.Value.Properties?.Keys.ToList()

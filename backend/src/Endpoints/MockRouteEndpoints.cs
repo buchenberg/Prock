@@ -20,23 +20,17 @@ public static class MockRouteEndpoints
 
         app.MapGet("/prock/api/mock-routes", async Task<Results<Ok<List<MockRouteDto>>, Ok>> (MariaDbContext db) =>
         {
-            var response = await db.MockRoutes.ToListAsync();
-            if (response != null && response.Count > 0)
+            var mockRoutes = await db.MockRoutes.ToListAsync();
+            return TypedResults.Ok(mockRoutes?.Select(x => new MockRouteDto()
             {
-                return TypedResults.Ok(response.Select(x => new MockRouteDto()
-                {
-                    RouteId = Guid.Parse(x.RouteId),
-                    Method = x.Method,
-                    Path = x.Path,
-                    HttpStatusCode = x.HttpStatusCode,
-                    Mock = x.Mock != null ? JsonSerializer.Deserialize<dynamic>(x.Mock) : null,
-                    Enabled = x.Enabled
-                }).ToList());
-            }
-            else
-            {
-                return TypedResults.Ok();
-            }
+                RouteId = Guid.Parse(x.RouteId),
+                Method = x.Method,
+                Path = x.Path,
+                HttpStatusCode = x.HttpStatusCode,
+                Mock = x.Mock != null ? JsonSerializer.Deserialize<dynamic>(x.Mock) : null,
+                Enabled = x.Enabled
+            }).ToList() ?? []);
+
         });
 
 

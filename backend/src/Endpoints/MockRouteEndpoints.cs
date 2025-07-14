@@ -29,7 +29,7 @@ public static class MockRouteEndpoints
                     Method = x.Method,
                     Path = x.Path,
                     HttpStatusCode = x.HttpStatusCode,
-                    Mock = x.Mock ?? null,
+                    Mock = x.Mock != null ? JsonSerializer.Deserialize<dynamic>(x.Mock) : null,
                     Enabled = x.Enabled
                 }).ToList());
             }

@@ -6,6 +6,6 @@ public class MockRouteDto
     public string? Method { get; set; }
     public string? Path { get; set; }
     public int HttpStatusCode { get; set; }
-    public string? Mock { get; set; }
+    public object? Mock { get; set; }
     public bool Enabled { get; set; }
 }

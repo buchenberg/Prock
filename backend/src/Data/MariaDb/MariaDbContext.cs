@@ -10,18 +10,10 @@ public partial class MariaDbContext : Microsoft.EntityFrameworkCore.DbContext
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Widget>()
-            .ToTable("Widgets");
-        modelBuilder.Entity<Widget>()
-            .HasKey(b => b.Id);
-        modelBuilder.Entity<Widget>()
-            .Property(b => b.Name)
-            .IsRequired();
-        modelBuilder.Entity<Widget>()
-            .Property(b => b.Description)
-            .IsRequired();
+        // Configure the entity mappings here if needed
+        base.OnModelCreating(modelBuilder);
     }
 
-    public virtual DbSet<Prock.Backend.src.Data.MariaDb.Widget> Widgets { get; set; }
-    public virtual DbSet<Prock.Backend.src.Data.MariaDb.MockRoute> MockRoutes { get; set; }
+
+    public virtual DbSet<MockRoute> MockRoutes { get; set; }
 }

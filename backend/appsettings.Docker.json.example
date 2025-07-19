@@ -12,5 +12,8 @@
     "UpstreamUrl": "https://example.com",
     "MongoDbUri": "mongodb://user:pass@database",
     "DbName": "prock-db"
+  },
+  "ConnectionStrings": {
+    "MariaDbConnectionString": "server=mariadb;user id=root;password=mockula;database=mockula"
   }
 }

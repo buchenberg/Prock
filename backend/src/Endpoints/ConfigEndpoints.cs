@@ -43,33 +43,7 @@ public static class ConfigEndpoints
             {
                 return Results.BadRequest("Upstream URL cannot be empty.");
             }
-            // Check if the widget exists
-            var existingWidget = await mariaDbContext.Widgets.FirstOrDefaultAsync((x) => x.Name == "Default Widget", cancellationToken);
-            if (existingWidget == null)
-            {
-                app.Logger.LogInformation("Creating default widget");
-                var widget = new Widget()
-                {
-                    Name = "Default Widget",
-                    Description = "This is a default widget.",
-                };
-                mariaDbContext.Widgets.Add(widget);
-                await mariaDbContext.SaveChangesAsync(cancellationToken);
-            }
-            else
-            {
-                app.Logger.LogInformation("Updating existing widget");
-                existingWidget.Name = "Updated Widget";
-                existingWidget.Description = "This widget has been updated.";
-                var widget = new Widget()
-                {
-                    Name = "Default Widget",
-                    Description = "This is a default widget.",
-                };
-                mariaDbContext.Widgets.Add(widget);
-                await mariaDbContext.SaveChangesAsync(cancellationToken);
-            }
-            // end widget stuff
+
             var config = await db.ProckConfig.SingleOrDefaultAsync(cancellationToken);
             if (config == null)
             {

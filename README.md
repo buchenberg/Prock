@@ -30,7 +30,7 @@
 ### 1. Run with Docker (Recommended)
 
 1. Copy `appsettings.Docker.json.example` to `appsettings.Docker.json` and set your `UpstreamUrl`.
-2. Copy `frontend/.env.example` to `frontend/.env`.
+2. Copy `Frontend/.env.example` to `Frontend/.env`.
 3. Run:
    ```sh
    docker-compose up
@@ -41,15 +41,15 @@
 
 1. Install [MongoDB Community Edition](https://www.mongodb.com/try/download/community).
 2. Copy and configure `appsettings.json` as needed for your environment.
-3. (Optional) Copy `frontend/.env.example` to `frontend/.env`.
+3. (Optional) Copy `Frontend/.env.example` to `Frontend/.env`.
 4. Start backend:
    ```sh
    cd backend
    dotnet run
    ```
-5. Start frontend:
+5. Start UI:
    ```sh
-   cd frontend
+   cd Frontend
    npm install
    npm run dev
    ```

@@ -37,7 +37,7 @@ interface ProckStore {
     prockConfig: AsyncData<ServerConfig>;
     getProckConfigs: () => Promise<void>;
     updateUpstreamUrl: (upstreamUrl: string) => void;
-    generateMockRoutesFromOpenApi: (documentId: string) => void;
+    generateMockRoutesFromOpenApi: (documentId: string) => Promise<void>;
 }
 
 export const useProckStore = create<ProckStore>()((set, get) => ({
@@ -120,15 +120,18 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
         }
     },
     deleteMockRoute: async (mockRouteId: string) => {
-        set({ mockRoutes: { isLoading: true, isError: false } });
+        set({ mockRoutes: { ...get().mockRoutes, isLoading: true, isError: false } });
         const prevMockRoutes = get().mockRoutes.value;
         try {
             await api.deleteRouteAsync(mockRouteId);
             if (prevMockRoutes !== undefined) {
-                const updatedMockRoutes = prevMockRoutes.filter((r) => r.routeId !== mockRouteId);
-                set({ mockRoutes: { isLoading: false, isError: false, value: updatedMockRoutes } });
+
+                const filteredRoutes = Array.isArray(get().mockRoutes.value)
+                    ? get().mockRoutes.value?.filter((r) => r.routeId !== mockRouteId) || []
+                    : [];
+                set({ mockRoutes: { isLoading: false, isError: false, value: filteredRoutes } });
             } else {
-                set({ mockRoutes: { isLoading: false, isError: false, value: [] } });
+                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: false } });
             }
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {

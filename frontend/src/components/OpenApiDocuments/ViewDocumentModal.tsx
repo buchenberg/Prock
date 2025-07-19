@@ -2,6 +2,8 @@ import { Modal, Row, Col, Badge, Button } from "react-bootstrap";
 import { formatDate } from "../../helpers/functions";
 import { useProckStore } from "../../store/useProckStore";
 import { OpenApiDocument } from "./store/useOpenApiStore";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 
 
@@ -12,14 +14,34 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
     setShowJsonModal: (show: boolean) => void;
 }) => {
     const { generateMockRoutesFromOpenApi } = useProckStore();
+    const [ isGeneratingMockRoutes, setIsGeneratingMockRoutes ] = useState(false);
+    const navigate = useNavigate();
+
+    const handleGenerateMockRoutes = async () => {
+        if (!selectedDocument) return;
+        setIsGeneratingMockRoutes(true);
+
+        // Call the function to generate mock routes from the selected OpenAPI document
+        await generateMockRoutesFromOpenApi(selectedDocument.documentId);
+        
+        navigate(`#mocks`);
+        setIsGeneratingMockRoutes(false);
+        // Close the modal after generating mock routes
+        setShowJsonModal(false);
+        // Optionally, you can also close the detail modal
+        setShowDetailModal(false);
+        
+
+    };
 
     return (
         <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} size="lg">
             <Modal.Header closeButton>
                 <Modal.Title>OpenAPI Document Details</Modal.Title>
             </Modal.Header>
-            <Modal.Body>
-                {selectedDocument && (
+            <Modal.Body> {
+                isGeneratingMockRoutes ? <p>Generating mock routes...</p> : selectedDocument &&
+                (
                     <div>
                         <h5>{selectedDocument.title}</h5>
                         <p className="text-muted">{selectedDocument.description}</p>
@@ -62,7 +84,9 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
                             </div>
                         )}
                     </div>
-                )}
+                )
+
+            }
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="outline-secondary" onClick={() => setShowDetailModal(false)}>
@@ -77,7 +101,7 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
                 </Button>
                 <Button
                     variant="outline-primary"
-                    onClick={() => generateMockRoutesFromOpenApi(selectedDocument?.documentId || '')}
+                    onClick={handleGenerateMockRoutes}
                 >
                     Generate Mock Routes
                 </Button>

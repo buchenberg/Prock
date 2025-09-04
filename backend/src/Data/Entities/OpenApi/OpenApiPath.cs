@@ -5,6 +5,9 @@ namespace backend.Data.Entities;
 
 public class OpenApiPath
 {
+    [BsonId]
+    public ObjectId _id { get; set; }
+
     [BsonElement("path")]
     public string? Path { get; set; }
 

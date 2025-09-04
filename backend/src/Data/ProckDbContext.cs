@@ -66,6 +66,18 @@ public class ProckDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
         });
+
+        // Configure OpenApiPath entity
+        modelBuilder.Entity<OpenApiPath>(entity =>
+        {
+            entity.HasKey(e => e._id);
+        });
+        
+        // Configure OpenApiSpecification entity
+        modelBuilder.Entity<OpenApiSpecification>(entity =>
+        {
+            entity.HasKey(e => e._id);
+        });
     }
 
     public async Task<ProckConfig?> GetProckConfigAsync(CancellationToken cancellationToken = default)

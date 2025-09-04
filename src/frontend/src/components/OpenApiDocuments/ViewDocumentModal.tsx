@@ -1,4 +1,4 @@
-import { Modal, Row, Col, Badge, Button, Spinner } from "react-bootstrap";
+import { Modal, Row, Col, Badge, Button, Spinner, Alert } from "react-bootstrap";
 import { OpenApiDocument } from "../../store/useOpenApiStore";
 import { formatDate } from "../../helpers/functions";
 import { useProckStore } from "../../store/useProckStore";
@@ -15,13 +15,22 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
 }) => {
     const { generateMockRoutesFromOpenApi } = useProckStore();
     const [isGenerating, setIsGenerating] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     return (
-        <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} size="lg">
+        <Modal show={showDetailModal} onHide={() => {
+            setShowDetailModal(false);
+            setErrorMessage(null); // Clear error when closing modal
+        }} size="lg">
             <Modal.Header closeButton>
                 <Modal.Title>OpenAPI Document Details</Modal.Title>
             </Modal.Header>
             <Modal.Body>
+                {errorMessage && (
+                    <Alert variant="danger" onClose={() => setErrorMessage(null)} dismissible>
+                        {errorMessage}
+                    </Alert>
+                )}
                 {selectedDocument && (
                     <div>
                         <h5>{selectedDocument.title}</h5>
@@ -68,14 +77,17 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
                 )}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="outline-secondary" onClick={() => setShowDetailModal(false)}>
+                <Button variant="outline-secondary" onClick={() => {
+                    setShowDetailModal(false);
+                    setErrorMessage(null); // Clear error when closing modal
+                }}>
                     Close
                 </Button>
                 <Button variant="outline-primary" onClick={() => {
                     setShowJsonModal(true);
                     setShowDetailModal(false);
-                }
-                }>
+                    setErrorMessage(null); // Clear error when switching modals
+                }}>
                     View JSON
                 </Button>
                 <Button
@@ -83,17 +95,18 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
                     disabled={isGenerating}
                     onClick={async () => {
                         setIsGenerating(true);
+                        setErrorMessage(null); // Clear any previous error
                         try {
                             const documentId = parseInt(selectedDocument?.documentId || '0');
                             await generateMockRoutesFromOpenApi(documentId);
+                            // Only close modal and navigate on success
                             setShowDetailModal(false);
                             onNavigateToMocks?.();
                         } catch (error) {
                             console.error('Failed to generate mock routes:', error);
-                            // For now, still close modal and navigate even if there's an error
-                            // This ensures the user can see what happened
-                            setShowDetailModal(false);
-                            onNavigateToMocks?.();
+                            // Show error message in the modal instead of closing it
+                            const errorMsg = error instanceof Error ? error.message : 'Failed to generate mock routes';
+                            setErrorMessage(errorMsg);
                         } finally {
                             setIsGenerating(false);
                         }

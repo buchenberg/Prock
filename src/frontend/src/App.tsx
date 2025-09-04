@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
 import { Container, Modal, Nav, Navbar, NavDropdown, Spinner, Tab, Tabs } from 'react-bootstrap'
@@ -19,6 +19,12 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const [key, setKey] = useState(location.hash ? location.hash : "#home");
+
+  // Listen for location changes and update the active tab
+  useEffect(() => {
+    const currentHash = location.hash || "#home";
+    setKey(currentHash);
+  }, [location.hash]);
 
   const handleCloseRestartModal = () => {
     setShowResartModal(false);

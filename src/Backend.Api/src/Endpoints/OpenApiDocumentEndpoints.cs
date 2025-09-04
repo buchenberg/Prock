@@ -64,7 +64,8 @@ public static class OpenApiDocumentEndpoints
             .WithName("GenerateMocksFromOpenApiDocument")
             .WithSummary("Generate mock routes from an OpenAPI document")
             .Produces<IEnumerable<MockRouteResponse>>(201)
-            .Produces(404);
+            .Produces(404)
+            .Produces<string>(409);
     }
 
     private static async Task<Results<Ok<IEnumerable<OpenApiDocumentResponse>>, ProblemHttpResult>> GetAllDocuments(
@@ -184,7 +185,7 @@ public static class OpenApiDocumentEndpoints
         }
     }
 
-    private static async Task<Results<Created<IEnumerable<MockRouteResponse>>, NotFound, ProblemHttpResult>> GenerateMocksFromDocument(
+    private static async Task<Results<Created<IEnumerable<MockRouteResponse>>, NotFound, ProblemHttpResult, Conflict<string>>> GenerateMocksFromDocument(
         int id, IOpenApiService openApiService, IMockRouteService mockRouteService, ILogger<Program> logger)
     {
         try
@@ -215,6 +216,8 @@ public static class OpenApiDocumentEndpoints
             }
 
             var mockRoutes = new List<MockRouteResponse>();
+            var duplicateRoutes = new List<string>();
+            var totalRoutes = 0;
 
             logger.LogInformation("Found {PathCount} paths in OpenAPI document", openApiDocument.Paths?.Count ?? 0);
 
@@ -226,12 +229,13 @@ public static class OpenApiDocumentEndpoints
                     logger.LogInformation("Processing path: {Path} with {OperationCount} operations", 
                         path.Key, path.Value.Operations?.Count ?? 0);
                     
-                    foreach (var operation in path.Value.Operations)
+                    foreach (var operation in path.Value.Operations ?? new Dictionary<OperationType, OpenApiOperation>())
                     {
                         try
                         {
                             var method = operation.Key.ToString().ToUpper();
                             var pathPattern = path.Key;
+                            totalRoutes++;
                             
                             logger.LogInformation("Generating mock for {Method} {Path}", method, pathPattern);
                             
@@ -282,6 +286,7 @@ public static class OpenApiDocumentEndpoints
                             {
                                 logger.LogWarning("Skipping duplicate mock route: {Method} {Path} - {Message}", 
                                     method, pathPattern, duplicateEx.Message);
+                                duplicateRoutes.Add($"{method} {pathPattern}");
                             }
                         }
                         catch (Exception operationEx)
@@ -294,8 +299,20 @@ public static class OpenApiDocumentEndpoints
                 }
             }
 
-            logger.LogInformation("Successfully generated {Count} mock routes from OpenAPI document {DocumentId}",
-                mockRoutes.Count, id);
+            logger.LogInformation("Successfully generated {Count} mock routes from OpenAPI document {DocumentId}. " +
+                "Total attempted: {TotalRoutes}, Duplicates skipped: {DuplicateCount}",
+                mockRoutes.Count, id, totalRoutes, duplicateRoutes.Count);
+
+            // If no routes were created because they all already exist, return conflict error
+            if (mockRoutes.Count == 0 && duplicateRoutes.Count > 0)
+            {
+                var message = duplicateRoutes.Count == 1 
+                    ? $"Mock route already exists: {duplicateRoutes[0]}"
+                    : $"All {duplicateRoutes.Count} mock routes already exist: {string.Join(", ", duplicateRoutes)}";
+                
+                logger.LogWarning("No new mock routes created - all routes already exist for document {DocumentId}", id);
+                return TypedResults.Conflict(message);
+            }
 
             return TypedResults.Created($"/prock/api/mock-routes", mockRoutes.AsEnumerable());
         }

@@ -54,6 +54,7 @@ const OpenApiDocuments: React.FC = () => {
     };
 
     const handleNavigateToMocks = () => {
+        // Navigate to the mocks tab using hash routing
         navigate('#mocks');
     };
 

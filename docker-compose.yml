@@ -5,33 +5,47 @@ services:
     environment:
       - MONGODB_CONNECTION_STRING=mongodb://user:pass@database
       - ASPNETCORE_ENVIRONMENT=Docker
+      - Prock__MongoDbUri=mongodb://user:pass@database:27017/prock
+      - Prock__Host=http://backend
+      - Prock__Port=5001
+      - Prock__DbName=prock
     build:
-      context: ./backend/
-      dockerfile: ./.docker/Dockerfile
+      context: .
+      dockerfile: ./src/Backend.Api/.docker/Dockerfile
     ports:
-      - 5001:5001
-      - 443:443
-      - 80:80
+      - "5001:5001"
     depends_on:
       - database
     networks:
       procknet:
         aliases:
           - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
   frontend:
     image: prock-frontend
     restart: always
     build:
-      context: ./frontend/
+      context: ./src/frontend/
       dockerfile: ./.docker/Dockerfile
     ports:
-      - 8080:80
+      - "8080:8080"
     depends_on:
       - backend
     networks:
       procknet:
         aliases:
           - frontend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
   database:
     image: mongodb/mongodb-community-server:6.0.15-ubi9
     restart: always

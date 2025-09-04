@@ -1,17 +1,20 @@
-import { Modal, Row, Col, Badge, Button } from "react-bootstrap";
+import { Modal, Row, Col, Badge, Button, Spinner } from "react-bootstrap";
 import { OpenApiDocument } from "../../store/useOpenApiStore";
 import { formatDate } from "../../helpers/functions";
 import { useProckStore } from "../../store/useProckStore";
+import { useState } from "react";
 
 
 
-const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocument, setShowJsonModal }: {
+const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocument, setShowJsonModal, onNavigateToMocks }: {
     showDetailModal: boolean;
     setShowDetailModal: (show: boolean) => void;
     selectedDocument: OpenApiDocument | null;
     setShowJsonModal: (show: boolean) => void;
+    onNavigateToMocks?: () => void;
 }) => {
     const { generateMockRoutesFromOpenApi } = useProckStore();
+    const [isGenerating, setIsGenerating] = useState(false);
 
     return (
         <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} size="lg">
@@ -77,9 +80,33 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
                 </Button>
                 <Button
                     variant="outline-primary"
-                    onClick={() => generateMockRoutesFromOpenApi(selectedDocument?.documentId || '')}
+                    disabled={isGenerating}
+                    onClick={async () => {
+                        setIsGenerating(true);
+                        try {
+                            const documentId = parseInt(selectedDocument?.documentId || '0');
+                            await generateMockRoutesFromOpenApi(documentId);
+                            setShowDetailModal(false);
+                            onNavigateToMocks?.();
+                        } catch (error) {
+                            console.error('Failed to generate mock routes:', error);
+                            // For now, still close modal and navigate even if there's an error
+                            // This ensures the user can see what happened
+                            setShowDetailModal(false);
+                            onNavigateToMocks?.();
+                        } finally {
+                            setIsGenerating(false);
+                        }
+                    }}
                 >
-                    Generate Mock Routes
+                    {isGenerating ? (
+                        <>
+                            <Spinner size="sm" className="me-2" />
+                            Generating...
+                        </>
+                    ) : (
+                        'Generate Mock Routes'
+                    )}
                 </Button>
 
             </Modal.Footer>

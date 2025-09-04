@@ -15,23 +15,23 @@ const CreateDocumentModal = ({ show, onHide }: {
         title: '',
         version: '',
         description: '',
-        openApiJson: ''
+        originalJson: ''
     });
     const handleCreateSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setUploadError(null);
 
-        if (!createForm.openApiJson.trim()) {
+        if (!createForm.originalJson.trim()) {
             setUploadError('OpenAPI JSON is required');
             return;
         }
 
         try {
             // Try to parse JSON to validate it
-            JSON.parse(createForm.openApiJson);
+            JSON.parse(createForm.originalJson);
             createDocument(createForm);
             onHide();
-            setCreateForm({ title: '', version: '', description: '', openApiJson: '' });
+            setCreateForm({ title: '', version: '', description: '', originalJson: '' });
         } catch {
             setUploadError('Invalid JSON format');
         }
@@ -42,7 +42,7 @@ const CreateDocumentModal = ({ show, onHide }: {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const content = event.target?.result as string;
-                setCreateForm(prev => ({ ...prev, openApiJson: content }));
+                setCreateForm(prev => ({ ...prev, originalJson: content }));
 
                 // Try to extract title and version from the JSON
                 try {
@@ -125,8 +125,8 @@ const CreateDocumentModal = ({ show, onHide }: {
                         <Form.Control
                             as="textarea"
                             rows={10}
-                            value={createForm.openApiJson}
-                            onChange={(e) => setCreateForm(prev => ({ ...prev, openApiJson: e.target.value }))}
+                            value={createForm.originalJson}
+                            onChange={(e) => setCreateForm(prev => ({ ...prev, originalJson: e.target.value }))}
                             placeholder="Paste your OpenAPI specification here..."
                             required
                         />

@@ -16,8 +16,9 @@ export interface ServerConfig {
 }
 
 export interface MockRoute {
-    enabled?: boolean;
+    id?: number;
     routeId?: string;
+    enabled?: boolean;
     method?: string;
     httpStatusCode?: number;
     path?: string;
@@ -33,11 +34,11 @@ interface ProckStore {
     getMockRoutes: () => void;
     createMockRoute: (mockRoute: MockRoute) => void;
     updateMockRoute: (mockRoute: MockRoute) => void;
-    deleteMockRoute: (mockRouteId: string) => void;
+    deleteMockRoute: (mockRouteId: number) => void;
     prockConfig: AsyncData<ServerConfig>;
     getProckConfigs: () => Promise<void>;
     updateUpstreamUrl: (upstreamUrl: string) => void;
-    generateMockRoutesFromOpenApi: (documentId: string) => void;
+    generateMockRoutesFromOpenApi: (documentId: number) => void;
 }
 
 export const useProckStore = create<ProckStore>()((set, get) => ({
@@ -88,11 +89,14 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
             }
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
-                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: error.message } });
-                console.error(error.message);
+                const errorMessage = error.response?.data?.detail || error.response?.data?.title || error.message;
+                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage } });
+                console.error(errorMessage);
+                throw new Error(errorMessage); // Re-throw for UI to handle
             } else {
                 const typedError = error as Error;
                 set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: typedError.message } });
+                throw typedError; // Re-throw for UI to handle
             }
         }
     },
@@ -100,10 +104,13 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
         set({ mockRoutes: { isLoading: true, isError: false } });
         const prevMockRoutes = get().mockRoutes.value;
         try {
-            const response = await api.updateRouteAsync(mockRoute);
-            if (prevMockRoutes !== undefined && mockRoute.routeId) {
+            if (!mockRoute.id) {
+                throw new Error('MockRoute ID is required for updates');
+            }
+            const response = await api.updateRouteAsync(mockRoute.id, mockRoute);
+            if (prevMockRoutes !== undefined) {
                 const updatedMockRoutes = prevMockRoutes.map((r) =>
-                    r.routeId === mockRoute.routeId ? response.data : r
+                    r.id === mockRoute.id ? response.data : r
                 );
                 set({ mockRoutes: { isLoading: false, isError: false, value: updatedMockRoutes } });
             } else {
@@ -119,17 +126,12 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
             }
         }
     },
-    deleteMockRoute: async (mockRouteId: string) => {
+    deleteMockRoute: async (mockRouteId: number) => {
         set({ mockRoutes: { isLoading: true, isError: false } });
-        const prevMockRoutes = get().mockRoutes.value;
         try {
             await api.deleteRouteAsync(mockRouteId);
-            if (prevMockRoutes !== undefined) {
-                const updatedMockRoutes = prevMockRoutes.filter((r) => r.routeId !== mockRouteId);
-                set({ mockRoutes: { isLoading: false, isError: false, value: updatedMockRoutes } });
-            } else {
-                set({ mockRoutes: { isLoading: false, isError: false, value: [] } });
-            }
+            // Refetch the data from server to ensure consistency
+            await get().getMockRoutes();
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
                 set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: error.message } });
@@ -176,19 +178,24 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
             }
         }
     },
-    generateMockRoutesFromOpenApi: async (documentId: string) => {
+    generateMockRoutesFromOpenApi: async (documentId: number) => {
         set({ mockRoutes: { ...get().mockRoutes, isLoading: true } });
         try {
             const response = await generateMockRoutesFromOpenApi(documentId);
-            // Merge or replace as needed
-            set({ mockRoutes: { isLoading: false, isError: false, value: response.data } });
+            // Merge with existing routes instead of replacing
+            const currentRoutes = get().mockRoutes.value || [];
+            const newRoutes = [...currentRoutes, ...response.data];
+            set({ mockRoutes: { isLoading: false, isError: false, value: newRoutes } });
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
-            set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: error.message } });
-                console.error(error.message);
+                const errorMessage = error.response?.data?.detail || error.response?.data?.title || error.message;
+                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage } });
+                console.error(errorMessage);
+                throw new Error(errorMessage); // Re-throw for UI to handle
             } else {
                 const typedError = error as Error;
                 set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: typedError.message } });
+                throw typedError; // Re-throw for UI to handle
             }
         }
     },

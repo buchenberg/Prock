@@ -10,9 +10,11 @@
   <ItemGroup>
     <PackageReference Include="AspNetCore.Proxy" Version="4.5.0" />
     <PackageReference Include="AspNetCore.Scalar" Version="1.1.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.24" />
-    <PackageReference Include="MongoDB.EntityFrameworkCore" Version="8.0.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
     <PackageReference Include="NSwag.AspNetCore" Version="14.4.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="Yarp.ReverseProxy" Version="2.2.0" />

@@ -15,7 +15,7 @@ const JsonModal = ({ onHide, showJsonModal, title, documentId }: {
 
     useEffect(() => {
         if (documentId) {
-            fetchOpenApiJson(documentId);
+            fetchOpenApiJson(parseInt(documentId));
         }
     }, [documentId, fetchOpenApiJson]);
 

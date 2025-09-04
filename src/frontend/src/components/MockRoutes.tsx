@@ -45,6 +45,8 @@ export default function MockRoutes() {
     }
 
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     const handleCloseDeleteModal = () => {
         setSelectedRoute(undefined);
@@ -55,14 +57,29 @@ export default function MockRoutes() {
         setShowDeleteModal(true);
     }
 
+    const handleCloseErrorModal = () => {
+        setShowErrorModal(false);
+        setErrorMessage('');
+    }
+
+    const handleShowErrorModal = (message: string) => {
+        setErrorMessage(message);
+        setShowErrorModal(true);
+    }
+
     const handleSubmitNewRoute = async () => {
         // Validate
         if (!newRoute?.mock) {
             console.error("no new mock to submit!");
             return;
         }
-        createMockRoute(newRoute);
-        handleCloseCreateModal();
+        try {
+            await createMockRoute(newRoute);
+            handleCloseCreateModal();
+        } catch (error: unknown) {
+            const errorMsg = error instanceof Error ? error.message : 'Failed to create mock route';
+            handleShowErrorModal(errorMsg);
+        }
     }
 
     const handleSubmitUpdateRoute = async () => {
@@ -77,11 +94,11 @@ export default function MockRoutes() {
 
     const handleDeleteRoute = async () => {
         // Validate
-        if (!selectedRoute?.routeId) {
+        if (!selectedRoute?.id) {
             console.error("no mock to delete!");
             return;
         }
-        deleteMockRoute(selectedRoute.routeId);
+        deleteMockRoute(selectedRoute.id);
         handleCloseDeleteModal();
     }
 
@@ -140,12 +157,13 @@ export default function MockRoutes() {
                 <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
             </Stack>
         </div>
-        {mockRoutes.value ?
+        {mockRoutes.value !== undefined ?
             <>
-                <Stack gap={3}>
-                    {mockRoutes.value.map((route) => {
+                {mockRoutes.value.length > 0 ? (
+                    <Stack gap={3}>
+                        {mockRoutes.value.map((route) => {
                         return (
-                            <Card key={route.routeId}>
+                            <Card key={route.id || route.routeId}>
                                 <Card.Header>
                                     <Row>
                                         <Col>
@@ -157,18 +175,18 @@ export default function MockRoutes() {
                                         <Col xs={2}>
                                             <Form.Check
                                                 type="switch"
-                                                id={`${route.routeId}-switch`}
+                                                id={`${route.id || route.routeId}-switch`}
                                                 className='float-end'
                                                 checked={route.enabled}
                                                 label={route.enabled ? "Enabled" : "Disabled"}
                                                 onChange={async () => {
-                                                    if (route.routeId === undefined || route.enabled === undefined)
+                                                    if (route.id === undefined || route.enabled === undefined)
                                                         return;
                                                     if (!route.enabled) {
-                                                        await api.enableRouteAsync(route.routeId);
+                                                        await api.enableRouteAsync(route.id);
                                                     }
                                                     else if (route.enabled) {
-                                                        await api.disableRouteAsync(route.routeId);
+                                                        await api.disableRouteAsync(route.id);
                                                     }
                                                 }} />
                                         </Col>
@@ -199,8 +217,13 @@ export default function MockRoutes() {
                                 </Card.Footer>
                             </Card>
                         )
-                    })}
-                </Stack>
+                        })}
+                    </Stack>
+                ) : (
+                    <div className="d-flex justify-content-center">
+                        <p className="text-muted">No mock routes found. Click the + button to create one.</p>
+                    </div>
+                )}
             </>
             :
             <>
@@ -224,7 +247,7 @@ export default function MockRoutes() {
                 <Button variant="secondary" onClick={handleCloseDeleteModal}>
                     Cancel
                 </Button>
-                <Button variant="primary" onClick={handleDeleteRoute} disabled={!selectedRoute?.routeId}>
+                <Button variant="primary" onClick={handleDeleteRoute} disabled={!selectedRoute?.id}>
                     Delete
                 </Button>
             </Modal.Footer>
@@ -342,6 +365,19 @@ export default function MockRoutes() {
                 </Button>
                 <Button variant="primary" onClick={handleSubmitUpdateRoute}>
                     Submit
+                </Button>
+            </Modal.Footer>
+        </Modal>
+        <Modal show={showErrorModal} onHide={handleCloseErrorModal}>
+            <Modal.Header closeButton>
+                <Modal.Title>Error</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>{errorMessage}</p>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="primary" onClick={handleCloseErrorModal}>
+                    OK
                 </Button>
             </Modal.Footer>
         </Modal>

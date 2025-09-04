@@ -3,19 +3,15 @@ services:
     image: prock-backend
     restart: always
     environment:
-      - MONGODB_CONNECTION_STRING=mongodb://user:pass@database
       - ASPNETCORE_ENVIRONMENT=Docker
-      - Prock__MongoDbUri=mongodb://user:pass@database:27017/prock
-      - Prock__Host=http://backend
-      - Prock__Port=5001
-      - Prock__DbName=prock
+      - ConnectionStrings__DefaultConnection=Server=mariadb;Database=mockula;User=mockula;Password=mockula;
     build:
       context: .
       dockerfile: ./src/Backend.Api/.docker/Dockerfile
     ports:
       - "5001:5001"
     depends_on:
-      - database
+      - mariadb
     networks:
       procknet:
         aliases:
@@ -41,32 +37,30 @@ services:
         aliases:
           - frontend
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-  database:
-    image: mongodb/mongodb-community-server:6.0.15-ubi9
+  mariadb:
+    image: mariadb:10.5
     restart: always
     environment:
-      - MONGODB_INITDB_ROOT_USERNAME=user
-      - MONGODB_INITDB_ROOT_PASSWORD=pass
-    volumes:
-      # seeding scripts
-      - ./database/.docker/mongo-entrypoint:/docker-entrypoint-initdb.d
-      # named volumes
-      - mongodb:/data/db
-      - mongoconfig:/data/configdb
+      MYSQL_ROOT_PASSWORD: mockula
+      MYSQL_DATABASE: mockula
+      MYSQL_USER: mockula
+      MYSQL_PASSWORD: mockula
     ports:
-      - 27018:27017
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
     networks:
-       procknet:
+      procknet:
         aliases:
-          - database
+          - mariadb
+
 volumes:
-  mongodb:
-  mongoconfig:
+  mariadb_data:
 networks:
   procknet:
     driver: bridge

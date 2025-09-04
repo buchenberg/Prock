@@ -4,25 +4,31 @@ This project contains comprehensive unit tests for the Prock backend API using x
 
 ## Overview
 
-The test suite covers:
-- **Endpoint Logic**: All API endpoints including mock routes, configuration, and proxy functionality
-- **Data Layer**: Database context operations and entity behavior
-- **Business Logic**: Core application logic and validation
+The test suite covers the MariaDB-based backend architecture:
+- **API Endpoints**: All minimal API endpoints with clean architecture
+- **Service Layer**: Business logic and domain services  
+- **Data Layer**: MariaDB context operations and entity behavior
+- **Integration**: End-to-end testing with in-memory database
 
 ## Test Structure
 
 ```
-backend.Tests/
+src/Backend.Tests/
 ├── TestBase/                    # Test infrastructure and helpers
 │   ├── AutoMoqDataAttribute.cs  # Custom AutoFixture attribute with domain customizations
-│   ├── TestDbContext.cs         # In-memory database helpers
+│   ├── TestDbContext.cs         # In-memory MariaDB database helpers
 │   └── MockHttpContext.cs       # HttpContext mocking utilities
 ├── Endpoints/                   # API endpoint tests
-│   ├── ProckEndpointsTests.cs   # Mock route management tests
-│   ├── ConfigEndpointsTests.cs  # Configuration endpoint tests
-│   └── ProxyEndpointsTests.cs   # Proxy logic tests
+│   ├── MockRouteEndpointsTests.cs   # Mock route management tests
+│   ├── ConfigEndpointsTests.cs      # Configuration endpoint tests
+│   ├── OpenApiEndpointsTests.cs     # OpenAPI document tests
+│   └── ProxyEndpointsTests.cs       # Proxy logic tests
+├── Services/                    # Service layer tests
+│   ├── MockRouteServiceTests.cs     # Mock route business logic
+│   ├── ProckConfigServiceTests.cs   # Configuration service tests
+│   └── OpenApiServiceTests.cs       # OpenAPI service tests
 ├── Data/                        # Data layer tests
-│   └── ProckDbContextTests.cs   # Database context tests
+│   └── MariaDbContextTests.cs       # MariaDB context tests
 └── GlobalUsings.cs              # Global using statements
 ```
 
@@ -71,18 +77,19 @@ public async Task TestWithSpecificMethods(string method, MockRoute route)
 
 ## Test Database Strategy
 
-### In-Memory Testing
-Uses Entity Framework's in-memory provider for fast, isolated tests:
+### In-Memory MariaDB Testing
+Uses Entity Framework's in-memory provider configured for MariaDB compatibility:
 ```csharp
-await using var context = TestDbContext.CreateInMemory();
+await using var context = TestDbContext.CreateInMemoryMariaDb();
 // or with seeded data
-await using var context = await TestDbContext.CreateSeededAsync(fixture);
+await using var context = await TestDbContext.CreateSeededMariaDbAsync(fixture);
 ```
 
 ### Benefits:
-- **Fast**: No real database connection
-- **Isolated**: Each test gets a fresh database
-- **Deterministic**: Predictable test data
+- **Fast**: No real database connection or Docker containers
+- **Isolated**: Each test gets a fresh MariaDB-compatible database
+- **Deterministic**: Predictable test data with proper entity relationships
+- **Realistic**: Tests actual Entity Framework Core behavior with MariaDB entities
 
 ## Running Tests
 

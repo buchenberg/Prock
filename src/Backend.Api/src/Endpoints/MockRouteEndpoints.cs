@@ -22,7 +22,7 @@ public static class MockRouteEndpoints
             .Produces<IEnumerable<MockRouteResponse>>();
 
         // GET /prock/api/mock-routes/{id}
-        routes.MapGet("{id}", GetMockRouteById)
+        routes.MapGet("{id:int}", GetMockRouteById)
             .WithName("GetMockRouteById")
             .WithSummary("Get a mock route by ID")
             .Produces<MockRouteResponse>()
@@ -36,7 +36,7 @@ public static class MockRouteEndpoints
             .ProducesValidationProblem();
 
         // PUT /prock/api/mock-routes/{id}
-        routes.MapPut("{id}", UpdateMockRoute)
+        routes.MapPut("{id:int}", UpdateMockRoute)
             .WithName("UpdateMockRoute")
             .WithSummary("Update an existing mock route")
             .Produces<MockRouteResponse>()
@@ -44,21 +44,21 @@ public static class MockRouteEndpoints
             .ProducesValidationProblem();
 
         // DELETE /prock/api/mock-routes/{id}
-        routes.MapDelete("{id}", DeleteMockRoute)
+        routes.MapDelete("{id:int}", DeleteMockRoute)
             .WithName("DeleteMockRoute")
             .WithSummary("Delete a mock route")
             .Produces(204)
             .Produces(404);
 
         // PUT /prock/api/mock-routes/{id}/enable
-        routes.MapPut("{id}/enable", EnableMockRoute)
+        routes.MapPut("{id:int}/enable", EnableMockRoute)
             .WithName("EnableMockRoute")
             .WithSummary("Enable a mock route")
             .Produces<MockRouteResponse>()
             .Produces(404);
 
         // PUT /prock/api/mock-routes/{id}/disable
-        routes.MapPut("{id}/disable", DisableMockRoute)
+        routes.MapPut("{id:int}/disable", DisableMockRoute)
             .WithName("DisableMockRoute")
             .WithSummary("Disable a mock route")
             .Produces<MockRouteResponse>()
@@ -94,7 +94,7 @@ public static class MockRouteEndpoints
     }
 
     private static async Task<Results<Ok<MockRouteResponse>, NotFound, ProblemHttpResult>> GetMockRouteById(
-        string id, IMockRouteService mockRouteService)
+        int id, IMockRouteService mockRouteService)
     {
         try
         {
@@ -123,14 +123,20 @@ public static class MockRouteEndpoints
             var response = MapToResponse(created);
             return TypedResults.Created($"/prock/api/mock-routes/{created.RouteId}", response);
         }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning("Duplicate mock route attempt: {Message}", ex.Message);
+            return TypedResults.Problem(ex.Message, statusCode: 409); // 409 Conflict
+        }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Failed to create mock route");
             return TypedResults.Problem($"Failed to create mock route: {ex.Message}", statusCode: 500);
         }
     }
 
     private static async Task<Results<Ok<MockRouteResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateMockRoute(
-        string id, UpdateMockRouteRequest request, IMockRouteService mockRouteService, ILogger<Program> logger)
+        int id, UpdateMockRouteRequest request, IMockRouteService mockRouteService, ILogger<Program> logger)
     {
         try
         {
@@ -153,7 +159,7 @@ public static class MockRouteEndpoints
     }
 
     private static async Task<Results<NoContent, NotFound, ProblemHttpResult>> DeleteMockRoute(
-        string id, IMockRouteService mockRouteService, ILogger<Program> logger)
+        int id, IMockRouteService mockRouteService, ILogger<Program> logger)
     {
         try
         {
@@ -173,7 +179,7 @@ public static class MockRouteEndpoints
     }
 
     private static async Task<Results<Ok<MockRouteResponse>, NotFound, ProblemHttpResult>> EnableMockRoute(
-        string id, IMockRouteService mockRouteService, ILogger<Program> logger)
+        int id, IMockRouteService mockRouteService, ILogger<Program> logger)
     {
         try
         {
@@ -195,7 +201,7 @@ public static class MockRouteEndpoints
     }
 
     private static async Task<Results<Ok<MockRouteResponse>, NotFound, ProblemHttpResult>> DisableMockRoute(
-        string id, IMockRouteService mockRouteService, ILogger<Program> logger)
+        int id, IMockRouteService mockRouteService, ILogger<Program> logger)
     {
         try
         {
@@ -236,10 +242,11 @@ public static class MockRouteEndpoints
     }
 
     // Mapping helpers
-    private static MockRouteResponse MapToResponse(Backend.Core.Domain.Entities.MockRoute entity)
+    private static MockRouteResponse MapToResponse(Backend.Core.Domain.Entities.MariaDb.MockRoute entity)
     {
         return new MockRouteResponse
         {
+            Id = entity.Id,
             RouteId = entity.RouteId.ToString(),
             Method = entity.Method ?? string.Empty,
             Path = entity.Path ?? string.Empty,
@@ -251,10 +258,11 @@ public static class MockRouteEndpoints
         };
     }
 
-    private static Backend.Core.Domain.Entities.MockRoute MapToEntity(CreateMockRouteRequest request)
+    private static Backend.Core.Domain.Entities.MariaDb.MockRoute MapToEntity(CreateMockRouteRequest request)
     {
-        return new Backend.Core.Domain.Entities.MockRoute
+        return new Backend.Core.Domain.Entities.MariaDb.MockRoute
         {
+            RouteId = Guid.NewGuid().ToString(), // Generate a unique RouteId
             Method = request.Method,
             Path = request.Path,
             HttpStatusCode = request.HttpStatusCode,
@@ -263,10 +271,11 @@ public static class MockRouteEndpoints
         };
     }
 
-    private static Backend.Core.Domain.Entities.MockRoute MapToEntity(UpdateMockRouteRequest request)
+    private static Backend.Core.Domain.Entities.MariaDb.MockRoute MapToEntity(UpdateMockRouteRequest request)
     {
-        return new Backend.Core.Domain.Entities.MockRoute
+        return new Backend.Core.Domain.Entities.MariaDb.MockRoute
         {
+            RouteId = Guid.NewGuid().ToString(), // This will be overridden by the service with the existing RouteId
             Method = request.Method,
             Path = request.Path,
             HttpStatusCode = request.HttpStatusCode,

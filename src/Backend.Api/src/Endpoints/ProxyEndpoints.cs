@@ -13,7 +13,7 @@ public static class ProxyEndpoints
     {
         var defaultUpstreamUrl = app.Configuration.GetSection("Prock").GetSection("UpstreamUrl").Value ?? "https://example.com";
 
-        app.Map("/{**catch-all}", async Task<Results<ContentHttpResult, ProblemHttpResult, EmptyHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, ProckDbContext db, HttpMessageInvoker httpClient) =>
+        app.MapFallback(async Task<Results<ContentHttpResult, ProblemHttpResult>> (HttpContext httpContext, IHttpForwarder forwarder, IHubContext<NotificationHub> hub, MariaDbContext db, HttpMessageInvoker httpClient) =>
         {
             var requestPath = httpContext.Request.Path.Value;
             var requestMethod = httpContext.Request.Method;
@@ -31,7 +31,7 @@ public static class ProxyEndpoints
             }
 
             var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(100) };
-            var config = await db.ProckConfig.SingleOrDefaultAsync();
+            var config = await db.ProckConfigs.SingleOrDefaultAsync();
             var upstreamUrl = config?.UpstreamUrl ?? defaultUpstreamUrl;
 
             var error = await forwarder.SendAsync(httpContext, upstreamUrl, httpClient, requestOptions, HttpTransformer.Default);
@@ -43,7 +43,7 @@ public static class ProxyEndpoints
                 return TypedResults.Problem("Forwarding error");
             }
 
-            return TypedResults.Empty;
+            return TypedResults.Problem("Forwarder error occurred", statusCode: 500);
 
         });
 

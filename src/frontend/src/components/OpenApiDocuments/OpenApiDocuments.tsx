@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Button,
     Card,
@@ -17,6 +18,7 @@ import ViewDocumentModal from './ViewDocumentModal';
 import CreateDocumentModal from './CreateDocumentModal';
 
 const OpenApiDocuments: React.FC = () => {
+    const navigate = useNavigate();
     const {
         documents,
         getDocuments,
@@ -36,19 +38,23 @@ const OpenApiDocuments: React.FC = () => {
 
     useEffect(() => {
         if (selectedDocument) {
-            fetchOpenApiJson(selectedDocument.documentId);
+            fetchOpenApiJson(parseInt(selectedDocument.documentId));
         }
     }, [fetchOpenApiJson, selectedDocument]);
 
 
     const handleDelete = async (documentId: string) => {
         if (window.confirm('Are you sure you want to delete this OpenAPI document?')) {
-            deleteDocument(documentId);
+            deleteDocument(parseInt(documentId));
         }
     };
 
     const handleToggleActive = async (document: OpenApiDocument) => {
-        updateDocument(document.documentId, { isActive: !document.isActive });
+        updateDocument(parseInt(document.documentId), { isActive: !document.isActive });
+    };
+
+    const handleNavigateToMocks = () => {
+        navigate('#mocks');
     };
 
     return (
@@ -162,6 +168,7 @@ const OpenApiDocuments: React.FC = () => {
                 setShowDetailModal={setShowDetailModal}
                 selectedDocument={selectedDocument}
                 setShowJsonModal={setShowJsonModal}
+                onNavigateToMocks={handleNavigateToMocks}
             />
             {/* JSON Modal */}
             <JsonModal

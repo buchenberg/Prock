@@ -1,4 +1,4 @@
-using Backend.Core.Domain.Entities.OpenApi;
+using Backend.Core.Domain.Entities.MariaDb;
 using Backend.Core.Services.Interfaces;
 using Backend.Infrastructure.Data.Context;
 using Microsoft.EntityFrameworkCore;
@@ -7,72 +7,99 @@ namespace Backend.Infrastructure.Services;
 
 public class OpenApiService : IOpenApiService
 {
-    private readonly ProckDbContext _context;
+    private readonly MariaDbContext _context;
 
-    public OpenApiService(ProckDbContext context)
+    public OpenApiService(MariaDbContext context)
     {
         _context = context;
     }
 
-    public async Task<IEnumerable<OpenApiSpecification>> GetActiveDocumentsAsync()
+    public async Task<IEnumerable<OpenApiSpecification>> GetAllAsync()
     {
-        return await _context.OpenApiDocuments
-            .Where(x => x.IsActive)
-            .OrderByDescending(x => x.CreatedAt)
+        return await _context.OpenApiSpecifications.ToListAsync();
+    }
+
+    public async Task<IEnumerable<OpenApiSpecification>> GetActiveAsync()
+    {
+        return await _context.OpenApiSpecifications
+            .Where(spec => spec.IsActive)
             .ToListAsync();
     }
 
-    public async Task<OpenApiSpecification?> GetDocumentByIdAsync(string id)
+    public async Task<OpenApiSpecification?> GetByIdAsync(int id)
     {
-        if (!Guid.TryParse(id, out var guidId))
-            return null;
-            
-        return await _context.OpenApiDocuments
-            .FirstOrDefaultAsync(x => x.DocumentId == guidId);
+        return await _context.OpenApiSpecifications.FindAsync(id);
     }
 
-    public async Task<OpenApiSpecification?> GetDocumentByTitleAsync(string title)
+    public async Task<OpenApiSpecification?> GetByTitleAsync(string title)
     {
-        return await _context.OpenApiDocuments
-            .Where(x => x.IsActive)
-            .FirstOrDefaultAsync(x => x.Title == title);
+        return await _context.OpenApiSpecifications
+            .FirstOrDefaultAsync(spec => spec.Title == title && spec.IsActive);
     }
 
-    public async Task<OpenApiSpecification> CreateDocumentAsync(OpenApiSpecification document)
+    public async Task<OpenApiSpecification> CreateAsync(OpenApiSpecification specification)
     {
-        document.DocumentId = Guid.NewGuid();
-        document.CreatedAt = DateTime.UtcNow;
-        document.UpdatedAt = DateTime.UtcNow;
-        
-        _context.OpenApiDocuments.Add(document);
+        _context.OpenApiSpecifications.Add(specification);
         await _context.SaveChangesAsync();
-        return document;
+        return specification;
     }
 
-    public async Task<OpenApiSpecification> UpdateDocumentAsync(string id, OpenApiSpecification document)
+    public async Task<OpenApiSpecification> UpdateAsync(int id, OpenApiSpecification specification)
     {
-        var existingDocument = await GetDocumentByIdAsync(id);
-        if (existingDocument == null)
-            throw new InvalidOperationException($"OpenAPI document with ID {id} not found");
+        var existingSpec = await _context.OpenApiSpecifications.FindAsync(id);
+        if (existingSpec == null)
+            throw new ArgumentException($"OpenAPI specification with ID {id} not found");
 
-        existingDocument.Title = document.Title;
-        existingDocument.Version = document.Version;
-        existingDocument.Description = document.Description;
-        existingDocument.OriginalJson = document.OriginalJson;
-        existingDocument.IsActive = document.IsActive;
-        existingDocument.UpdatedAt = DateTime.UtcNow;
+        // Update properties
+        existingSpec.Title = specification.Title;
+        existingSpec.Description = specification.Description;
+        existingSpec.Version = specification.Version;
+        existingSpec.OpenApiVersion = specification.OpenApiVersion;
+        existingSpec.Content = specification.Content;
+        existingSpec.IsActive = specification.IsActive;
+        existingSpec.UpdatedAt = DateTime.UtcNow;
 
+        _context.OpenApiSpecifications.Update(existingSpec);
         await _context.SaveChangesAsync();
-        return existingDocument;
+        return existingSpec;
     }
 
-    public async Task<bool> DeleteDocumentAsync(string id)
+    public async Task<bool> DeleteAsync(int id)
     {
-        var document = await GetDocumentByIdAsync(id);
-        if (document == null) return false;
+        var spec = await _context.OpenApiSpecifications.FindAsync(id);
+        if (spec == null)
+            return false;
 
-        _context.OpenApiDocuments.Remove(document);
+        _context.OpenApiSpecifications.Remove(spec);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ActivateAsync(int id)
+    {
+        var spec = await _context.OpenApiSpecifications.FindAsync(id);
+        if (spec == null)
+            return false;
+
+        spec.IsActive = true;
+        spec.UpdatedAt = DateTime.UtcNow;
+        _context.OpenApiSpecifications.Update(spec);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeactivateAsync(int id)
+    {
+        var spec = await _context.OpenApiSpecifications.FindAsync(id);
+        if (spec == null)
+            return false;
+
+        spec.IsActive = false;
+        spec.UpdatedAt = DateTime.UtcNow;
+        _context.OpenApiSpecifications.Update(spec);
         await _context.SaveChangesAsync();
         return true;
     }
 }
+
+

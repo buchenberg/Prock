@@ -5,7 +5,7 @@ import { OpenAPI } from '@scalar/openapi-types';
 import { AsyncData } from './AsyncData';
 
 export interface OpenApiDocument {
-    documentId: string;
+    documentId: string; // Keep as string for compatibility, but will contain the int ID
     title?: string;
     version?: string;
     description?: string;
@@ -18,6 +18,7 @@ export interface OpenApiDocument {
     createdAt: string;
     updatedAt: string;
     isActive: boolean;
+    pathCount?: number;
 }
 
 export interface OpenApiDocumentDetail extends OpenApiDocument {
@@ -28,7 +29,7 @@ export interface CreateOpenApiDocument {
     title?: string;
     version?: string;
     description?: string;
-    openApiJson: string;
+    originalJson: string;
 }
 
 interface OpenApiStore {
@@ -36,9 +37,9 @@ interface OpenApiStore {
     documentDetail: AsyncData<OpenAPI.Document | undefined>;
     getDocuments: () => void;
     createDocument: (document: CreateOpenApiDocument) => void;
-    updateDocument: (documentId: string, document: Partial<OpenApiDocument>) => void;
-    deleteDocument: (documentId: string) => void;
-    fetchOpenApiJson: (documentId: string) => void;
+    updateDocument: (documentId: number, document: Partial<OpenApiDocument>) => void;
+    deleteDocument: (documentId: number) => void;
+    fetchOpenApiJson: (documentId: number) => void;
 }
 
 export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
@@ -93,14 +94,14 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
             }
         }
     },
-    updateDocument: async (documentId: string, document: Partial<OpenApiDocument>) => {
+    updateDocument: async (documentId: number, document: Partial<OpenApiDocument>) => {
         set({ documents: { isLoading: true, isError: false } });
         const prevDocuments = get().documents.value;
         try {
             const response = await api.updateOpenApiDocumentAsync(documentId, document);
             if (prevDocuments !== undefined) {
                 const updatedDocuments = prevDocuments.map(doc =>
-                    doc.documentId === documentId ? response.data : doc
+                    doc.documentId === documentId.toString() ? response.data : doc
                 );
                 set({ documents: { isLoading: false, isError: false, value: updatedDocuments } });
             } else {
@@ -117,7 +118,7 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
             }
         }
     },
-    fetchOpenApiJson: async (documentId: string) => {
+    fetchOpenApiJson: async (documentId: number) => {
         set({ documentDetail: { isLoading: true, isError: false } });
         try {
             const response = await api.fetchOpenApiDocumentJsonAsync(documentId);
@@ -133,7 +134,7 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
             }
         }
     },
-    deleteDocument: async (documentId: string) => {
+    deleteDocument: async (documentId: number) => {
         set({ documents: { isLoading: true, isError: false } });
         const prevDocuments = get().documents.value;
         try {
@@ -141,7 +142,7 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
             if (prevDocuments !== undefined) {
                 set({
                     documents: {
-                        isLoading: false, isError: false, value: (prevDocuments as OpenApiDocument[]).filter((x) => x.documentId !== documentId)
+                        isLoading: false, isError: false, value: (prevDocuments as OpenApiDocument[]).filter((x) => x.documentId !== documentId.toString())
                     }
                 });
             } else {

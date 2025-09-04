@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Backend.Infrastructure.Data.Context;
-using Backend.Core.Domain.Entities;
+using Backend.Core.Domain.Entities.MariaDb;
 using backend.Tests.TestBase;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.SignalR;
@@ -273,7 +273,7 @@ public class ProxyEndpointsTests
         HttpContext httpContext,
         IHttpForwarder forwarder,
         IHubContext<NotificationHub> hub,
-        ProckDbContext db,
+        MariaDbContext db,
         HttpMessageInvoker httpClient,
         string defaultUpstreamUrl = "https://example.com",
         ILogger? logger = null)
@@ -300,7 +300,7 @@ public class ProxyEndpointsTests
         }
 
         var requestOptions = new ForwarderRequestConfig { ActivityTimeout = TimeSpan.FromSeconds(100) };
-        var config = await db.ProckConfig.SingleOrDefaultAsync();
+        var config = await db.ProckConfigs.SingleOrDefaultAsync();
         var upstreamUrl = config?.UpstreamUrl ?? defaultUpstreamUrl;
 
         var error = await forwarder.SendAsync(httpContext, upstreamUrl, httpClient, requestOptions, HttpTransformer.Default);

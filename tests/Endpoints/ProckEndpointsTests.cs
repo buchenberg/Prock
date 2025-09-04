@@ -2,7 +2,7 @@ using System.Text.Json;
 using AutoFixture;
 using AutoFixture.Xunit2;
 using Backend.Infrastructure.Data.Context;
-using Backend.Core.Domain.Entities;
+using Backend.Core.Domain.Entities.MariaDb;
 using Backend.Api.Endpoints;
 using Shared.Contracts.Models;
 using backend.Tests.TestBase;
@@ -79,7 +79,7 @@ public class ProckEndpointsTests
     [Theory, AutoMoqData]
     public async Task GetMockRouteById_WhenRouteDoesNotExist_ReturnsNotFound(
         IFixture fixture,
-        Guid nonExistentId)
+        string nonExistentId)
     {
         // Arrange
         await using var context = TestDbContext.CreateInMemory();
@@ -109,7 +109,7 @@ public class ProckEndpointsTests
         result.Should().BeOfType<Created<MockRouteDto>>();
         var createdResult = (Created<MockRouteDto>)result;
         createdResult.Value.Should().NotBeNull();
-        createdResult.Value!.RouteId.Should().NotBeEmpty();
+        createdResult.Value!.RouteId.Should().NotBeNullOrEmpty();
         createdResult.Value.Method.Should().Be(routeDto.Method);
         createdResult.Value.Path.Should().Be(routeDto.Path);
         
@@ -208,7 +208,7 @@ public class ProckEndpointsTests
 
     #region Helper Methods
 
-    private static async Task<IResult> GetMockRoutesHandler(ProckDbContext db)
+    private static async Task<IResult> GetMockRoutesHandler(MariaDbContext db)
     {
         // Simulate the endpoint logic
         return await db.MockRoutes.ToListAsync() is List<MockRoute> response
@@ -224,7 +224,7 @@ public class ProckEndpointsTests
             : TypedResults.Ok();
     }
 
-    private static async Task<IResult> GetMockRouteByIdHandler(Guid routeId, ProckDbContext db)
+    private static async Task<IResult> GetMockRouteByIdHandler(string routeId, MariaDbContext db)
     {
         return await db.MockRoutes.SingleOrDefaultAsync(x => x.RouteId == routeId) is MockRoute response
             ? TypedResults.Ok(new MockRouteDto()
@@ -239,7 +239,7 @@ public class ProckEndpointsTests
             : TypedResults.NotFound();
     }
 
-    private static async Task<IResult> CreateMockRouteHandler(MockRouteDto route, ProckDbContext db, WebApplication app)
+    private static async Task<IResult> CreateMockRouteHandler(MockRouteDto route, MariaDbContext db, WebApplication app)
     {
         var httpMethods = new[] { "GET", "PUT", "POST", "PATCH", "DELETE" };
         
@@ -252,7 +252,7 @@ public class ProckEndpointsTests
 
         var result = new MockRoute
         {
-            RouteId = Guid.NewGuid(),
+            RouteId = Guid.NewGuid().ToString(),
             Method = route.Method,
             Path = route.Path,
             HttpStatusCode = route.HttpStatusCode,
@@ -265,10 +265,10 @@ public class ProckEndpointsTests
 
         route.RouteId = result.RouteId;
 
-        return TypedResults.Created($"/prock/api/mock-routes/{result.RouteId}", route);
+        return TypedResults.Created($"/prock/api/mock-routes/{result.Id}", route);
     }
 
-    private static async Task<IResult> DisableRouteHandler(Guid routeId, ProckDbContext db)
+    private static async Task<IResult> DisableRouteHandler(string routeId, MariaDbContext db)
     {
         var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
 
@@ -293,7 +293,7 @@ public class ProckEndpointsTests
         return TypedResults.Ok(response);
     }
 
-    private static async Task<IResult> EnableRouteHandler(Guid routeId, ProckDbContext db)
+    private static async Task<IResult> EnableRouteHandler(string routeId, MariaDbContext db)
     {
         var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
 
@@ -311,14 +311,14 @@ public class ProckEndpointsTests
             Method = persistedRoute.Method,
             Path = persistedRoute.Path,
             HttpStatusCode = persistedRoute.HttpStatusCode,
-            Mock = JsonSerializer.Serialize(persistedRoute.Mock),
+            Mock = persistedRoute.Mock != null ? JsonSerializer.Deserialize<dynamic>(persistedRoute.Mock) : null,
             Enabled = persistedRoute.Enabled
         };
 
         return TypedResults.Ok(response);
     }
 
-    private static async Task<IResult> DeleteRouteHandler(Guid routeId, ProckDbContext db)
+    private static async Task<IResult> DeleteRouteHandler(string routeId, MariaDbContext db)
     {
         var persistedRoute = db.MockRoutes.SingleOrDefault(x => x.RouteId == routeId);
         if (persistedRoute == null)

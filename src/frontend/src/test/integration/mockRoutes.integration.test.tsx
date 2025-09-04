@@ -113,7 +113,7 @@ describe('MockRoutes Integration Tests', () => {
     })
     
     // Find the first route's toggle switch
-    const switches = screen.getAllByRole('switch')
+    const switches = screen.getAllByRole('checkbox')
     const firstSwitch = switches[0]
     
     // Verify initial state (should be enabled)
@@ -162,7 +162,7 @@ describe('MockRoutes Integration Tests', () => {
     expect(screen.getByText('/api/users')).toBeInTheDocument()
     
     // Verify enable/disable switches
-    const switches = screen.getAllByRole('switch')
+    const switches = screen.getAllByRole('checkbox')
     expect(switches).toHaveLength(2)
   })
 })

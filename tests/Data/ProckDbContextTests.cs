@@ -1,7 +1,6 @@
 using AutoFixture;
 using Backend.Infrastructure.Data.Context;
-using Backend.Core.Domain.Entities;
-using Backend.Core.Domain.Entities.OpenApi;
+using Backend.Core.Domain.Entities.MariaDb;
 using backend.Tests.TestBase;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +8,7 @@ using Xunit;
 
 namespace backend.Tests.Data;
 
-public class ProckDbContextTests
+public class MariaDbContextTests
 {
     [Theory, AutoMoqData]
     public async Task GetProckConfigAsync_WhenConfigExists_ReturnsConfig(
@@ -20,7 +19,7 @@ public class ProckDbContextTests
         await using var context = await TestDbContext.CreateWithEntitiesAsync(config);
 
         // Act
-        var result = await context.GetProckConfigAsync();
+        var result = await context.ProckConfigs.FirstOrDefaultAsync();
 
         // Assert
         result.Should().NotBeNull();
@@ -35,7 +34,7 @@ public class ProckDbContextTests
         await using var context = TestDbContext.CreateInMemory();
 
         // Act
-        var result = await context.GetProckConfigAsync();
+        var result = await context.ProckConfigs.FirstOrDefaultAsync();
 
         // Assert
         result.Should().BeNull();
@@ -55,12 +54,12 @@ public class ProckDbContextTests
         await using var context = await TestDbContext.CreateWithEntitiesAsync(allDocuments);
 
         // Act
-        var result = await context.GetActiveOpenApiDocumentsAsync();
+        var result = await context.OpenApiSpecifications.Where(d => d.IsActive).ToListAsync();
 
         // Assert
         result.Should().HaveCount(activeDocuments.Count);
         result.Should().OnlyContain(d => d.IsActive);
-        result.Select(d => d.DocumentId).Should().BeEquivalentTo(activeDocuments.Select(d => d.DocumentId));
+        result.Select(d => d.Id).Should().BeEquivalentTo(activeDocuments.Select(d => d.Id));
     }
 
     [Theory, AutoMoqData]
@@ -72,11 +71,11 @@ public class ProckDbContextTests
         await using var context = await TestDbContext.CreateWithEntitiesAsync(document);
 
         // Act
-        var result = await context.GetOpenApiDocumentByIdAsync(document.DocumentId);
+        var result = await context.OpenApiSpecifications.FirstOrDefaultAsync(d => d.Id == document.Id);
 
         // Assert
         result.Should().NotBeNull();
-        result!.DocumentId.Should().Be(document.DocumentId);
+        result!.Id.Should().Be(document.Id);
         result.Title.Should().Be(document.Title);
         result.Version.Should().Be(document.Version);
     }
@@ -84,13 +83,13 @@ public class ProckDbContextTests
     [Theory, AutoMoqData]
     public async Task GetOpenApiDocumentByIdAsync_WhenDocumentDoesNotExist_ReturnsNull(
         IFixture fixture,
-        Guid nonExistentId)
+        int nonExistentId)
     {
         // Arrange
         await using var context = TestDbContext.CreateInMemory();
 
         // Act
-        var result = await context.GetOpenApiDocumentByIdAsync(nonExistentId);
+        var result = await context.OpenApiSpecifications.FirstOrDefaultAsync(d => d.Id == nonExistentId);
 
         // Assert
         result.Should().BeNull();
@@ -106,7 +105,7 @@ public class ProckDbContextTests
         await using var context = await TestDbContext.CreateWithEntitiesAsync(document);
 
         // Act
-        var result = await context.GetOpenApiDocumentByTitleAsync(document.Title!);
+        var result = await context.OpenApiSpecifications.FirstOrDefaultAsync(d => d.Title == document.Title && d.IsActive);
 
         // Assert
         result.Should().NotBeNull();
@@ -124,7 +123,7 @@ public class ProckDbContextTests
         await using var context = await TestDbContext.CreateWithEntitiesAsync(document);
 
         // Act
-        var result = await context.GetOpenApiDocumentByTitleAsync(document.Title!);
+        var result = await context.OpenApiSpecifications.FirstOrDefaultAsync(d => d.Title == document.Title && d.IsActive);
 
         // Assert
         result.Should().BeNull();

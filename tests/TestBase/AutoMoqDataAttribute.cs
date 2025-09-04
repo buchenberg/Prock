@@ -2,7 +2,6 @@ using System.Text.Json;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoFixture.Xunit2;
-using MongoDB.Bson;
 
 namespace backend.Tests.TestBase;
 
@@ -24,31 +23,31 @@ public class AutoMoqDataAttribute : AutoDataAttribute
         fixture.Customize(new AutoMoqCustomization { ConfigureMembers = true });
         
         // Add common customizations
-        fixture.Customize<Backend.Core.Domain.Entities.MockRoute>(composer =>
+        fixture.Customize<Backend.Core.Domain.Entities.MariaDb.MockRoute>(composer =>
             composer
-                .With(x => x.RouteId, () => Guid.NewGuid())
+                .With(x => x.RouteId, () => Guid.NewGuid().ToString())
                 .With(x => x.Method, () => new[] { "GET", "POST", "PUT", "DELETE", "PATCH" }[new Random().Next(5)])
                 .With(x => x.HttpStatusCode, () => 200)
                 .With(x => x.Enabled, () => true)
                 .With(x => x.Path, () => "/api/test")
                 .With(x => x.Mock, () => JsonSerializer.Serialize(new { message = "test" })));
 
-        fixture.Customize<Backend.Core.Domain.Entities.ProckConfig>(composer =>
+        fixture.Customize<Backend.Core.Domain.Entities.MariaDb.ProckConfig>(composer =>
             composer
-                .With(x => x.Id, () => Guid.NewGuid())
-                .With(x => x.UpstreamUrl, () => "https://api.example.com"));
+                .With(x => x.UpstreamUrl, () => "https://api.example.com")
+                .With(x => x.Host, () => "localhost")
+                .With(x => x.Port, () => "5001"));
 
-        fixture.Customize<Backend.Core.Domain.Entities.OpenApi.OpenApiSpecification>(composer =>
+        fixture.Customize<Backend.Core.Domain.Entities.MariaDb.OpenApiSpecification>(composer =>
             composer
-                .With(x => x.DocumentId, () => Guid.NewGuid())
+                .With(x => x.Title, () => "Test API")
+                .With(x => x.Description, () => "Test API Description")
+                .With(x => x.Version, () => "1.0.0")
+                .With(x => x.OpenApiVersion, () => "3.0.0")
+                .With(x => x.Content, () => JsonSerializer.Serialize(new { openapi = "3.0.0", info = new { title = "Test API", version = "1.0.0" } }))
                 .With(x => x.CreatedAt, () => DateTime.UtcNow.AddDays(-1))
                 .With(x => x.UpdatedAt, () => DateTime.UtcNow)
-                .With(x => x.IsActive, () => true)
-                .With(x => x.OpenApiVersion, () => "3.0.0"));
-
-        // Fix ObjectId generation for MongoDB entities
-        fixture.Customize<ObjectId>(composer =>
-            composer.FromFactory(() => ObjectId.GenerateNewId()));
+                .With(x => x.IsActive, () => true));
 
         return fixture;
     }

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using AutoFixture;
 using Backend.Infrastructure.Data.Context;
-using Backend.Core.Domain.Entities;
+using Backend.Core.Domain.Entities.MariaDb;
 using Shared.Contracts.Models;
 using backend.Tests.TestBase;
 using FluentAssertions;
@@ -37,7 +37,7 @@ public class ConfigEndpointsTests
         config.GetProperty("upstreamUrl").GetString().Should().Be(prockConfig.UpstreamUrl);
         config.GetProperty("host").GetString().Should().Be("http://test");
         config.GetProperty("port").GetString().Should().Be("5001");
-        config.GetProperty("connectionString").GetString().Should().Be("mongodb://test:27017/");
+        config.GetProperty("connectionString").GetString().Should().Be("Server=localhost;Database=prock;");
     }
 
     [Theory, AutoMoqData]
@@ -80,7 +80,7 @@ public class ConfigEndpointsTests
         okResult.Value.Id.Should().Be(existingConfig.Id);
 
         // Verify database was updated
-        var updatedConfig = await context.ProckConfig.FirstAsync();
+        var updatedConfig = await context.ProckConfigs.FirstAsync();
         updatedConfig.UpstreamUrl.Should().Be(newUpstreamUrl);
     }
 
@@ -100,10 +100,10 @@ public class ConfigEndpointsTests
         result.Should().BeOfType<Ok<ProckConfig>>();
         var okResult = (Ok<ProckConfig>)result;
         okResult.Value.UpstreamUrl.Should().Be(newUpstreamUrl);
-        okResult.Value.Id.Should().NotBeEmpty();
+        okResult.Value.Id.Should().BeGreaterThan(0);
 
         // Verify new config was created in database
-        var configs = await context.ProckConfig.ToListAsync();
+        var configs = await context.ProckConfigs.ToListAsync();
         configs.Should().HaveCount(1);
         configs.First().UpstreamUrl.Should().Be(newUpstreamUrl);
     }
@@ -146,13 +146,13 @@ public class ConfigEndpointsTests
 
     #region Helper Methods
 
-    private static async Task<IResult> GetConfigHandler(ProckDbContext db, IConfiguration configuration)
+    private static async Task<IResult> GetConfigHandler(MariaDbContext db, IConfiguration configuration)
     {
         var host = configuration.GetSection("Prock").GetSection("Host").Value ?? "http://localhost";
         var port = configuration.GetSection("Prock").GetSection("Port").Value ?? "5001";
-        var connectionString = configuration.GetSection("Prock").GetSection("MongoDbUri").Value ?? "mongodb://localhost:27017/";
+        var connectionString = configuration.GetConnectionString("DefaultConnection") ?? "Server=localhost;Database=prock;";
         
-        var config = await db.GetProckConfigAsync();
+        var config = await db.ProckConfigs.FirstOrDefaultAsync();
         if (config == null)
         {
             return TypedResults.Ok(new
@@ -168,17 +168,16 @@ public class ConfigEndpointsTests
         return TypedResults.Ok(new { connectionString, upstreamUrl, host, port });
     }
 
-    private static async Task<IResult> UpdateUpstreamUrlHandler(ProckConfigDto update, ProckDbContext db)
+    private static async Task<IResult> UpdateUpstreamUrlHandler(ProckConfigDto update, MariaDbContext db)
     {
-        var config = await db.ProckConfig.SingleOrDefaultAsync();
+        var config = await db.ProckConfigs.SingleOrDefaultAsync();
         if (config == null)
         {
             config = new ProckConfig()
             {
-                Id = Guid.NewGuid(),
                 UpstreamUrl = update.UpstreamUrl
             };
-            db.ProckConfig.Add(config);
+            db.ProckConfigs.Add(config);
             await db.SaveChangesAsync();
             return Results.Ok(config);
         }
@@ -194,8 +193,7 @@ public class ConfigEndpointsTests
         {
             ["Prock:Host"] = "http://test",
             ["Prock:Port"] = "5001",
-            ["Prock:MongoDbUri"] = "mongodb://test:27017/",
-            ["Prock:DbName"] = "test-db"
+            ["ConnectionStrings:DefaultConnection"] = "Server=localhost;Database=prock;"
         };
 
         return new ConfigurationBuilder()

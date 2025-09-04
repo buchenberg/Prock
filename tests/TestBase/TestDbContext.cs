@@ -1,9 +1,7 @@
 using AutoFixture;
 using Backend.Infrastructure.Data.Context;
-using Backend.Core.Domain.Entities;
-using Backend.Core.Domain.Entities.OpenApi;
+using Backend.Core.Domain.Entities.MariaDb;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
 
 namespace backend.Tests.TestBase;
 
@@ -13,23 +11,23 @@ namespace backend.Tests.TestBase;
 public static class TestDbContext
 {
     /// <summary>
-    /// Creates a ProckDbContext with an in-memory database for testing
+    /// Creates a MariaDbContext with an in-memory database for testing
     /// </summary>
-    public static ProckDbContext CreateInMemory(string? databaseName = null)
+    public static MariaDbContext CreateInMemory(string? databaseName = null)
     {
         databaseName ??= Guid.NewGuid().ToString();
         
-        var options = new DbContextOptionsBuilder<ProckDbContext>()
+        var options = new DbContextOptionsBuilder<MariaDbContext>()
             .UseInMemoryDatabase(databaseName)
             .Options;
 
-        return new ProckDbContext(options);
+        return new MariaDbContext(options);
     }
 
     /// <summary>
-    /// Creates a ProckDbContext and seeds it with test data
+    /// Creates a MariaDbContext and seeds it with test data
     /// </summary>
-    public static async Task<ProckDbContext> CreateSeededAsync(IFixture fixture, string? databaseName = null)
+    public static async Task<MariaDbContext> CreateSeededAsync(IFixture fixture, string? databaseName = null)
     {
         var context = CreateInMemory(databaseName);
         
@@ -39,8 +37,8 @@ public static class TestDbContext
         var openApiDocs = fixture.CreateMany<OpenApiSpecification>(2).ToList();
 
         context.MockRoutes.AddRange(mockRoutes);
-        context.ProckConfig.Add(prockConfig);
-        context.OpenApiDocuments.AddRange(openApiDocs);
+        context.ProckConfigs.Add(prockConfig);
+        context.OpenApiSpecifications.AddRange(openApiDocs);
         
         await context.SaveChangesAsync();
         
@@ -51,9 +49,9 @@ public static class TestDbContext
     }
 
     /// <summary>
-    /// Creates a ProckDbContext with specific test entities
+    /// Creates a MariaDbContext with specific test entities
     /// </summary>
-    public static async Task<ProckDbContext> CreateWithEntitiesAsync(params object[] entities)
+    public static async Task<MariaDbContext> CreateWithEntitiesAsync(params object[] entities)
     {
         var context = CreateInMemory();
         

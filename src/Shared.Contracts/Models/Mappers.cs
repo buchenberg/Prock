@@ -9,7 +9,7 @@ public static class MockRouteMappers
     {
         return new MockRouteResponse
         {
-            RouteId = dto.RouteId.ToString(),
+            RouteId = dto.RouteId,
             Method = dto.Method ?? string.Empty,
             Path = dto.Path ?? string.Empty,
             HttpStatusCode = dto.HttpStatusCode,
@@ -24,7 +24,7 @@ public static class MockRouteMappers
     {
         return new MockRouteDto
         {
-            RouteId = Guid.NewGuid(), // Will be set by service
+            RouteId = Guid.NewGuid().ToString(), // Will be set by service
             Method = request.Method,
             Path = request.Path,
             HttpStatusCode = request.HttpStatusCode,

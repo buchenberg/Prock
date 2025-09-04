@@ -2,7 +2,7 @@
 
 public class MockRouteDto
 {
-    public Guid RouteId { get; set; }
+    public string RouteId { get; set; } = string.Empty;
     public string? Method { get; set; }
     public string? Path { get; set; }
     public int HttpStatusCode { get; set; }

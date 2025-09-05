@@ -491,7 +491,7 @@ public static class OpenApiDocumentEndpoints
             Version = request.Version,
             Description = request.Description,
             Content = request.OriginalJson,
-            IsActive = true,
+            IsActive = request.IsActive,
         };
     }
 }

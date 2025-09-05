@@ -121,3 +121,4 @@ src/.vs/config/applicationhost.config
 .vscode/
 Properties/
 .env
+.DS_Store

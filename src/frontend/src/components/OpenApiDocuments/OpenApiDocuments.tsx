@@ -16,6 +16,7 @@ import JsonModal from './JsonModal';
 import { formatDate } from '../../helpers/functions';
 import ViewDocumentModal from './ViewDocumentModal';
 import CreateDocumentModal from './CreateDocumentModal';
+import EditDocumentModal from './EditDocumentModal';
 
 const OpenApiDocuments: React.FC = () => {
     const navigate = useNavigate();
@@ -30,6 +31,7 @@ const OpenApiDocuments: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showJsonModal, setShowJsonModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
     const [selectedDocument, setSelectedDocument] = useState<OpenApiDocument | null>(null);
 
     useEffect(() => {
@@ -120,7 +122,7 @@ const OpenApiDocuments: React.FC = () => {
                                         <td>{formatDate(doc.createdAt)}</td>
                                         <td>
                                             <Button
-                                                variant="outline-primary"
+                                                variant="outline-info"
                                                 size="sm"
                                                 className="me-2"
                                                 onClick={() => {
@@ -129,6 +131,17 @@ const OpenApiDocuments: React.FC = () => {
                                                 }}
                                             >
                                                 View
+                                            </Button>
+                                            <Button
+                                                variant={'outline-primary'}
+                                                size="sm"
+                                                className="me-2"
+                                                 onClick={() => {
+                                                    setSelectedDocument(doc);
+                                                    setShowEditModal(true);
+                                                }}
+                                            >
+                                                {'Edit'}
                                             </Button>
                                             <Button
                                                 variant={doc.isActive ? 'outline-warning' : 'outline-success'}
@@ -170,6 +183,12 @@ const OpenApiDocuments: React.FC = () => {
                 selectedDocument={selectedDocument}
                 setShowJsonModal={setShowJsonModal}
                 onNavigateToMocks={handleNavigateToMocks}
+            />
+            {/* Edit Document Modal */}
+            <EditDocumentModal
+                showEditModal={showEditModal}
+                setShowEditModal={setShowEditModal}
+                selectedDocument={selectedDocument}
             />
             {/* JSON Modal */}
             <JsonModal

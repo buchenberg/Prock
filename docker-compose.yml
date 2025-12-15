@@ -3,7 +3,6 @@ services:
     image: prock-backend
     restart: always
     environment:
-      - MONGODB_CONNECTION_STRING=mongodb://user:pass@database
       - ASPNETCORE_ENVIRONMENT=Docker
     build:
       context: ./backend/
@@ -33,21 +32,19 @@ services:
         aliases:
           - frontend
   database:
-    image: mongodb/mongodb-community-server:6.0.15-ubi9
+    image: mongo:6.0
     restart: always
     environment:
-      - MONGODB_INITDB_ROOT_USERNAME=user
-      - MONGODB_INITDB_ROOT_PASSWORD=pass
+      - MONGO_INITDB_ROOT_USERNAME=user
+      - MONGO_INITDB_ROOT_PASSWORD=pass
     volumes:
-      # seeding scripts
-      - ./database/.docker/mongo-entrypoint:/docker-entrypoint-initdb.d
       # named volumes
       - mongodb:/data/db
       - mongoconfig:/data/configdb
     ports:
       - 27018:27017
     networks:
-       procknet:
+      procknet:
         aliases:
           - database
 volumes:

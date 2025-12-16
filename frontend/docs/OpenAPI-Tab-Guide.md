@@ -9,7 +9,7 @@ The new OpenAPI tab in the Prock interface allows you to upload, manage, and vie
 - **Upload** OpenAPI specifications (JSON/YAML)
 - **View** document details and metadata  
 - **Activate/Deactivate** documents
-- **Delete** documents (soft delete)
+- **Delete** documents (permanent delete)
 
 ### 📁 **File Upload Options**
 1. **File Upload**: Select JSON/YAML files from your computer
@@ -72,6 +72,6 @@ The tab uses these backend endpoints:
 - Documents are automatically validated when uploaded
 - The interface will extract metadata from your OpenAPI files automatically
 - Use the activate/deactivate feature to temporarily disable documents
-- All documents are soft-deleted, meaning they can be recovered if needed
+- Documents are permanently deleted when removed; this action cannot be undone.
 
 Enjoy managing your API specifications with Prock! 🚀

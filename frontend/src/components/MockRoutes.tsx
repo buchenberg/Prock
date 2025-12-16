@@ -137,7 +137,7 @@ export default function MockRoutes() {
         <div className='mb-3'>
             <Stack direction='horizontal' gap={2} className='mt-3'>
                 <h4>Mock Routes</h4>
-                <PlusCircle className='icon-btn' onClick={handleShowCreateModal} />
+                <PlusCircle className='icon-btn' onClick={handleShowCreateModal} data-testid="create-route-btn" />
             </Stack>
         </div>
         {mockRoutes.value ?
@@ -145,7 +145,7 @@ export default function MockRoutes() {
                 <Stack gap={3}>
                     {mockRoutes.value.map((route) => {
                         return (
-                            <Card key={route.routeId}>
+                            <Card key={route.routeId} data-testid={`mock-route-card-${route.routeId}`}>
                                 <Card.Header>
                                     <Row>
                                         <Col>
@@ -158,6 +158,7 @@ export default function MockRoutes() {
                                             <Form.Check
                                                 type="switch"
                                                 id={`${route.routeId}-switch`}
+                                                data-testid={`mock-route-switch-${route.routeId}`}
                                                 className='float-end'
                                                 checked={route.enabled}
                                                 label={route.enabled ? "Enabled" : "Disabled"}
@@ -189,10 +190,10 @@ export default function MockRoutes() {
                                 <Card.Footer>
 
                                     <Stack direction='horizontal' gap={2} className="float-end">
-                                        <Button size='sm' variant='secondary' onClick={() => handleShowDeleteModal(route)} >
+                                        <Button size='sm' variant='secondary' onClick={() => handleShowDeleteModal(route)} data-testid={`delete-route-btn-${route.routeId}`}>
                                             <Trash />
                                         </Button>
-                                        <Button size='sm' onClick={() => handleShowEditModal(route)}>
+                                        <Button size='sm' onClick={() => handleShowEditModal(route)} data-testid={`edit-route-btn-${route.routeId}`}>
                                             <PencilSquare />
                                         </Button>
                                     </Stack>
@@ -224,7 +225,7 @@ export default function MockRoutes() {
                 <Button variant="secondary" onClick={handleCloseDeleteModal}>
                     Cancel
                 </Button>
-                <Button variant="primary" onClick={handleDeleteRoute} disabled={!selectedRoute?.routeId}>
+                <Button variant="primary" onClick={handleDeleteRoute} disabled={!selectedRoute?.routeId} data-testid="confirm-delete-route-btn">
                     Delete
                 </Button>
             </Modal.Footer>
@@ -240,6 +241,7 @@ export default function MockRoutes() {
                             <Form.Label>HTTP Method</Form.Label>
                             <Form.Select
                                 value={newRoute.method}
+                                data-testid="route-method-select"
                                 onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setNewRoute({ ...newRoute, method: e.currentTarget.value })}>
                                 <option value={""}>Select...</option>
                                 <option value="Get">Get</option>
@@ -254,6 +256,7 @@ export default function MockRoutes() {
                                 type="text"
                                 placeholder="/some/path"
                                 value={newRoute.path}
+                                data-testid="route-path-input"
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewRoute({ ...newRoute, path: e.currentTarget.value })} />
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -262,6 +265,7 @@ export default function MockRoutes() {
                                 type="number"
                                 placeholder="200"
                                 value={newRoute.httpStatusCode}
+                                data-testid="route-status-input"
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewRoute({ ...newRoute, httpStatusCode: e.currentTarget.valueAsNumber })} />
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -283,7 +287,7 @@ export default function MockRoutes() {
                 </Button>
                 <Button variant="primary" onClick={handleSubmitNewRoute} disabled={
                     !newRoute?.method || !newRoute.path || !newRoute.mock || !newRoute.httpStatusCode
-                }>
+                } data-testid="save-route-btn">
                     Submit
                 </Button>
             </Modal.Footer>

@@ -1,4 +1,5 @@
 import { Modal, Row, Col, Badge, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import { OpenApiDocument } from "../../store/useOpenApiStore";
 import { formatDate } from "../../helpers/functions";
 import { useProckStore } from "../../store/useProckStore";
@@ -12,6 +13,7 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
     setShowJsonModal: (show: boolean) => void;
 }) => {
     const { generateMockRoutesFromOpenApi } = useProckStore();
+    const navigate = useNavigate();
 
     return (
         <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} size="lg">
@@ -77,7 +79,12 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
                 </Button>
                 <Button
                     variant="outline-primary"
-                    onClick={() => generateMockRoutesFromOpenApi(selectedDocument?.documentId || '')}
+                    onClick={async () => {
+                        await generateMockRoutesFromOpenApi(selectedDocument?.documentId || '');
+                        setShowDetailModal(false);
+                        navigate('#mocks');
+                    }}
+                    data-testid="generate-mocks-btn"
                 >
                     Generate Mock Routes
                 </Button>

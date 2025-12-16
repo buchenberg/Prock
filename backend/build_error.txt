@@ -1,0 +1,31 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(215,35): error CS0246: The type or namespace name 'OpenApiDocument' could not be found (are you missing a using directive or an assembly reference?) [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(218,66): error CS0246: The type or namespace name 'OpenApiDocument' could not be found (are you missing a using directive or an assembly reference?) [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(32,31): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(33,32): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(34,32): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(54,35): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(55,36): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(56,36): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(60,33): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(61,32): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(62,35): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Code\Personal\Prock\backend\backend.csproj]
+
+Build FAILED.
+
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(32,31): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(33,32): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(34,32): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(54,35): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(55,36): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(56,36): warning CS8601: Possible null reference assignment. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(60,33): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(61,32): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(62,35): warning CS8625: Cannot convert null literal to non-nullable reference type. [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(215,35): error CS0246: The type or namespace name 'OpenApiDocument' could not be found (are you missing a using directive or an assembly reference?) [C:\Code\Personal\Prock\backend\backend.csproj]
+C:\Code\Personal\Prock\backend\src\Endpoints\OpenApiEndpoints.cs(218,66): error CS0246: The type or namespace name 'OpenApiDocument' could not be found (are you missing a using directive or an assembly reference?) [C:\Code\Personal\Prock\backend\backend.csproj]
+    9 Warning(s)
+    2 Error(s)
+
+Time Elapsed 00:00:01.22

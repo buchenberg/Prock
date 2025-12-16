@@ -61,7 +61,7 @@ const OpenApiDocuments: React.FC = () => {
 
                 </Col>
                 <Col xs="auto">
-                    <Button variant="outline-primary" onClick={() => setShowCreateModal(true)}>
+                    <Button variant="outline-primary" onClick={() => setShowCreateModal(true)} data-testid="upload-doc-btn">
                         Upload Document
                     </Button>
                 </Col>
@@ -95,7 +95,7 @@ const OpenApiDocuments: React.FC = () => {
                             </thead>
                             <tbody>
                                 {documents.value.map((doc: OpenApiDocument) => (
-                                    <tr key={doc.documentId}>
+                                    <tr key={doc.documentId} data-testid={`openapi-doc-row-${doc.documentId}`}>
                                         <td>
                                             <strong>{doc.title || 'Untitled'}</strong>
                                         </td>
@@ -120,6 +120,7 @@ const OpenApiDocuments: React.FC = () => {
                                                     setSelectedDocument(doc);
                                                     setShowDetailModal(true);
                                                 }}
+                                                data-testid={`view-doc-btn-${doc.documentId}`}
                                             >
                                                 View
                                             </Button>

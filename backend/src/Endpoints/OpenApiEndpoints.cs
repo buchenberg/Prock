@@ -5,8 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Readers;
 using OpenApiSpecification = backend.Data.Entities.OpenApiSpecification;
 using JsonSerializer = System.Text.Json.JsonSerializer;
-using Microsoft.OpenApi.Models;
+using MsOpenApi = Microsoft.OpenApi.Models;
 using backend.Data.Entities;
+using Microsoft.OpenApi.Any;
 
 namespace backend.Endpoints;
 
@@ -57,7 +58,7 @@ public static class OpenApiEndpoints
                         UpdatedAt = document.UpdatedAt,
                         IsActive = document.IsActive,
                         Paths = null, // Simplified for now - can parse from PathsData if needed
-                        Tags = null, // Simplified for now - can parse from TagsData if needed  
+                        Tags = null, // Simplified for now - can parse from TagsData if needed
                         Servers = null, // Simplified for now - can parse from ServersData if needed
                         OriginalJson = document.OriginalJson
                     })
@@ -211,15 +212,15 @@ public static class OpenApiEndpoints
             });
         // Get OpenAPI JSON for a specific document
         app.MapGet("/prock/api/openapi-documents/{documentId}/json",
-            async Task<Results<Ok<OpenApiDocument>, BadRequest<string>, NotFound>> (Guid documentId, ProckDbContext db) =>
+            async Task<Results<Ok<MsOpenApi.OpenApiDocument>, BadRequest<string>, NotFound>> (Guid documentId, ProckDbContext db) =>
             {
                 return await db.GetOpenApiDocumentByIdAsync(documentId) is OpenApiSpecification document && !string.IsNullOrEmpty(document.OriginalJson)
-                    ? ParseOpenApiJson(document.OriginalJson) is OpenApiDocument parsedDoc
+                    ? ParseOpenApiJson(document.OriginalJson) is MsOpenApi.OpenApiDocument parsedDoc
                         ? TypedResults.Ok(parsedDoc)
                         : TypedResults.BadRequest("Invalid OpenAPI JSON format")
                     : TypedResults.NotFound();
             });
-     
+
 app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
     async Task<Results<Ok<List<MockRouteDto>>, NotFound, BadRequest<string>>> (Guid documentId, ProckDbContext db) =>
     {
@@ -238,19 +239,95 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
         var createdRoutes = new List<MockRouteDto>();
         var newMockRoutes = new List<MockRoute>();
         int routeCount = 0;
+        var random = new Random();
 
         // For each path and method, create a mock route
         foreach (var path in openApiDoc.Paths)
         {
             foreach (var op in path.Value.Operations)
             {
+                Console.WriteLine($"[MockGen] Processing {op.Key} {path.Key}");
+                // Try to find a success response (200, 201, or default)
+                MsOpenApi.OpenApiResponse? response = null;
+                int statusCode = 200;
+
+                if (op.Value.Responses.TryGetValue("200", out var response200))
+                {
+                    response = response200;
+                    statusCode = 200;
+                }
+                else if (op.Value.Responses.TryGetValue("201", out var response201))
+                {
+                    response = response201;
+                    statusCode = 201;
+                }
+                else if (op.Value.Responses.TryGetValue("default", out var responseDefault))
+                {
+                    response = responseDefault;
+                    statusCode = 200; // Default to 200 for 'default' response if strictly specific status not found
+                }
+                else
+                {
+                     Console.WriteLine($"[MockGen] No 200/201/default response found. Available: {string.Join(", ", op.Value.Responses.Keys)}");
+                }
+
+                string mockBody = "{}";
+
+                if (response != null)
+                {
+                    if (response.Content.TryGetValue("application/json", out var mediaType))
+                    {
+                        if (mediaType.Schema != null)
+                        {
+                            Console.WriteLine($"[MockGen] Found schema for {op.Key} {path.Key}. Calling GenerateMockValue.");
+                            try 
+                            {
+                                var mockData = GenerateMockValue(mediaType.Schema, openApiDoc, random);
+                                
+                                if (mockData == null) 
+                                {
+                                    Console.WriteLine($"[MockGen] GenerateMockValue returned null for {op.Key} {path.Key}");
+                                }
+                                else 
+                                {
+                                    var typeName = mockData.GetType().FullName;
+                                    Console.WriteLine($"[MockGen] GenerateMockValue returned type: {typeName}");
+                                    
+                                    if (typeName.Contains("Microsoft.OpenApi"))
+                                    {
+                                        Console.WriteLine($"[MockGen] CRITICAL: Returned internal OpenAPI type! Aborting serialization.");
+                                        mockBody = "{}";
+                                    }
+                                    else
+                                    {
+                                        mockBody = JsonSerializer.Serialize(mockData, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[MockGen] Serialization Error for {op.Key} {path.Key}: {ex.Message}");
+                                Console.WriteLine(ex.StackTrace);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[MockGen] Schema is null for {op.Key} {path.Key}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[MockGen] 'application/json' not found. Available: {string.Join(", ", response.Content.Keys)}");
+                    }
+                }
+
                 var mockRoute = new MockRoute
                 {
                     RouteId = Guid.NewGuid(),
                     Path = path.Key,
                     Method = op.Key.ToString().ToUpper(),
-                    HttpStatusCode = 200,
-                    Mock = "{}", // You can customize this as needed
+                    HttpStatusCode = statusCode,
+                    Mock = mockBody,
                     Enabled = true
                 };
                 newMockRoutes.Add(mockRoute);
@@ -282,7 +359,99 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
 
     }
 
-    private static OpenApiDocument? ParseOpenApiJson(string json)
+    private static object? GenerateMockValue(MsOpenApi.OpenApiSchema schema, MsOpenApi.OpenApiDocument doc, Random random, int depth = 0, string? parentRefId = null)
+    {
+        if (depth > 5) return null; 
+
+        if (schema.Reference != null)
+        {
+            var refId = schema.Reference.Id;
+            
+            // Handle self-reference / recursion prevention
+            if (refId == parentRefId)
+            {
+                // Fall through to process the schema structure itself
+            }
+            else
+            {
+                if (doc.Components != null && doc.Components.Schemas.TryGetValue(refId, out var refSchema))
+                {
+                    return GenerateMockValue(refSchema, doc, random, depth + 1, refId);
+                }
+                
+                var simpleName = refId.Split('/').Last();
+                if (doc.Components != null && doc.Components.Schemas.TryGetValue(simpleName, out var refSchemaSimple))
+                {
+                     return GenerateMockValue(refSchemaSimple, doc, random, depth + 1, simpleName);
+                }
+
+                return null; 
+            }
+        }
+
+        switch (schema.Type)
+        {
+            case "object":
+                var obj = new Dictionary<string, object?>();
+                if (schema.Properties != null)
+                {
+                    foreach (var prop in schema.Properties)
+                    {
+                        obj[prop.Key] = GenerateMockValue(prop.Value, doc, random, depth + 1);
+                    }
+                }
+                return obj;
+
+            case "array":
+                var items = new List<object?>();
+                int count = random.Next(1, 4); 
+                for (int i = 0; i < count; i++)
+                {
+                    items.Add(GenerateMockValue(schema.Items, doc, random, depth + 1));
+                }
+                return items;
+
+            case "string":
+                if (schema.Enum != null && schema.Enum.Count > 0)
+                {
+                    var index = random.Next(schema.Enum.Count);
+                    var enumVal = schema.Enum[index];
+                    if (enumVal is Microsoft.OpenApi.Any.OpenApiString s) return s.Value;
+                    if (enumVal is Microsoft.OpenApi.Any.OpenApiInteger i) return i.Value;
+                    return enumVal.ToString();
+                }
+
+                if (schema.Format == "date-time") return DateTime.UtcNow.ToString("O");
+                if (schema.Format == "date") return DateTime.UtcNow.ToString("yyyy-MM-dd");
+                if (schema.Format == "uuid") return Guid.NewGuid().ToString();
+
+                var words = new[] { "lorem", "ipsum", "dolor", "sit", "amet", "consectetur" };
+                return $"{words[random.Next(words.Length)]}_{random.Next(1000)}";
+
+            case "integer":
+                return random.Next(1, 100);
+
+            case "number":
+                return random.NextDouble() * 100.0;
+
+            case "boolean":
+                return random.Next(2) == 0;
+
+            default:
+                if (schema.Properties != null && schema.Properties.Count > 0)
+                {
+                    var implicitObj = new Dictionary<string, object?>();
+                    foreach (var prop in schema.Properties)
+                    {
+                         implicitObj[prop.Key] = GenerateMockValue(prop.Value, doc, random, depth + 1);
+                    }
+                    return implicitObj;
+                }
+                return null;
+        }
+    }
+
+    private static MsOpenApi.OpenApiDocument? ParseOpenApiJson(string json)
     {
         Console.WriteLine($"OpenAPI document parse attempt for JSON of length {json.Length}");
         try
@@ -292,9 +461,12 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                 ReferenceResolution = ReferenceResolutionSetting.DoNotResolveReferences,
                 // LoadExternalRefs = false,
             });
-            
-            var openApiDocument = reader.Read(json, out var diagnostic);
 
+            var openApiDocument = reader.Read(json, out var diagnostic);
+            
+            // Explicitly verify the type since generic reader might return something else if configured differently
+            // though here using string reader for OpenApiDocument
+            
             if (diagnostic.Errors.Count > 0)
             {
                 Console.WriteLine($"OpenAPI document parsing errors: {string.Join(", ", diagnostic.Errors.Select(e => e.Message))}");
@@ -303,14 +475,14 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
             Console.WriteLine($"OpenAPI document parse attempt success!");
             return openApiDocument;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine($"Error parsing OpenAPI JSON: {ex.Message}");
             return null;
         }
     }
 
-    private static void ExtractOpenApiInformation(OpenApiSpecification entity, OpenApiDocument parsedDoc)
+    private static void ExtractOpenApiInformation(OpenApiSpecification entity, MsOpenApi.OpenApiDocument parsedDoc)
     {
         try
         {
@@ -384,7 +556,8 @@ app.MapPost("/prock/api/openapi-documents/{documentId}/generate-mock-routes",
                 {
                     Schemas = parsedDoc.Components.Schemas?.ToDictionary(
                         kv => kv.Key,
-                        kv => new {
+                        kv => new
+                        {
                             kv.Value.Type,
                             kv.Value.Description,
                             Properties = kv.Value.Properties?.Keys.ToList()

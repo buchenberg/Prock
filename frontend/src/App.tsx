@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css'
 import MockRoutes from './components/MockRoutes'
 import { Container, Modal, Nav, Navbar, NavDropdown, Spinner, Tab, Tabs } from 'react-bootstrap'
@@ -19,6 +19,12 @@ function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const [key, setKey] = useState(location.hash ? location.hash : "#home");
+
+  useEffect(() => {
+    if (location.hash) {
+      setKey(location.hash);
+    }
+  }, [location.hash]);
 
   const handleCloseRestartModal = () => {
     setShowResartModal(false);
@@ -69,20 +75,20 @@ function App() {
             navigate(k as string);
             setKey(k as string)
           }}>
-          <Tab eventKey="#home" title="Home">
+          <Tab eventKey="#home" title={<span data-testid="nav-home">Home</span>}>
             <Home />
           </Tab>
-          <Tab eventKey="#config" title="Configuration">
+          <Tab eventKey="#config" title={<span data-testid="nav-config">Configuration</span>}>
             <Config />
           </Tab>
-          <Tab eventKey="#openapi" title="OpenAPI">
+          <Tab eventKey="#openapi" title={<span data-testid="nav-openapi">OpenAPI</span>}>
             <OpenApiDocuments />
           </Tab>
-          <Tab eventKey="#mocks" title="Mocks">
+          <Tab eventKey="#mocks" title={<span data-testid="nav-mocks">Mocks</span>}>
             <MockRoutes />
           </Tab>
 
-          <Tab eventKey="#logs" title="Logs">
+          <Tab eventKey="#logs" title={<span data-testid="nav-logs">Logs</span>}>
             <Logs />
           </Tab>
         </Tabs>

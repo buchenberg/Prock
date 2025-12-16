@@ -1,4 +1,4 @@
-﻿using backend.Data.Entities;
+using backend.Data.Entities;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using MongoDB.EntityFrameworkCore.Extensions;
@@ -17,16 +17,25 @@ public class ProckDbContext : DbContext
     public ProckDbContext(DbContextOptions options)
         : base(options)
     {
+        // Disable automatic transactions as standalone MongoDB does not support them
+        try 
+        {
+            Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
+        }
+        catch
+        {
+            // safely ignore if already set or not applicable
+        }
     }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         // Configure collections
         modelBuilder.Entity<MockRoute>().ToCollection("mockRoutes");
         modelBuilder.Entity<ProckConfig>().ToCollection("prockConfig");
         modelBuilder.Entity<OpenApiSpecification>().ToCollection("openApiDocuments");
-        
+
         // Configure OpenApiDocument entity specifically for MongoDB
         // modelBuilder.Entity<OpenApiSpecification>(entity =>
         // {
@@ -45,7 +54,7 @@ public class ProckDbContext : DbContext
         //     entity.Property(e => e.UpdatedAt);
         //     entity.Property(e => e.IsActive);
         //     entity.Property(e => e.OriginalJson);
-        //     entity.Property(e => e.Paths); 
+        //     entity.Property(e => e.Paths);
         //     // Ignore BsonDocument properties as they're not supported by EF Core
         //     // entity.Ignore(e => e.PathsData);
         //     // entity.Ignore(e => e.ComponentsData);
@@ -53,14 +62,14 @@ public class ProckDbContext : DbContext
         //     // entity.Ignore(e => e.ServersData);
         //     // entity.Ignore(e => e.ExternalDocsData);
         // });
-        
+
         // Configure MockRoute entity
         modelBuilder.Entity<MockRoute>(entity =>
         {
             entity.HasKey(e => e._id);
             entity.Property(e => e.RouteId);
         });
-        
+
         // Configure ProckConfig entity
         modelBuilder.Entity<ProckConfig>(entity =>
         {
@@ -72,20 +81,20 @@ public class ProckDbContext : DbContext
     {
         return await ProckConfig.SingleOrDefaultAsync(x => x.Id != Guid.Empty, cancellationToken);
     }
-    
+
     public async Task<List<OpenApiSpecification>> GetActiveOpenApiDocumentsAsync(CancellationToken cancellationToken = default)
     {
         return await OpenApiDocuments.Where(x => x.IsActive).ToListAsync(cancellationToken);
     }
-    
+
     public async Task<OpenApiSpecification?> GetOpenApiDocumentByIdAsync(Guid documentId, CancellationToken cancellationToken = default)
     {
         return await OpenApiDocuments.SingleOrDefaultAsync(x => x.DocumentId == documentId, cancellationToken);
     }
-    
+
     public async Task<OpenApiSpecification?> GetOpenApiDocumentByTitleAsync(string title, CancellationToken cancellationToken = default)
     {
         return await OpenApiDocuments.SingleOrDefaultAsync(x => x.Title == title && x.IsActive, cancellationToken);
     }
-    
+
 }

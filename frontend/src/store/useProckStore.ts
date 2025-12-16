@@ -77,8 +77,8 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
         }
     },
     createMockRoute: async (mockRoute: MockRoute) => {
-        set({ mockRoutes: { isLoading: true, isError: false } });
         const prevMockRoutes = get().mockRoutes.value;
+        set({ mockRoutes: { ...get().mockRoutes, isLoading: true } });
         try {
             const response = await api.createNewRouteAsync(mockRoute);
             if (prevMockRoutes !== undefined) {
@@ -97,8 +97,8 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
         }
     },
     updateMockRoute: async (mockRoute: MockRoute) => {
-        set({ mockRoutes: { isLoading: true, isError: false } });
         const prevMockRoutes = get().mockRoutes.value;
+        set({ mockRoutes: { ...get().mockRoutes, isLoading: true } });
         try {
             const response = await api.updateRouteAsync(mockRoute);
             if (prevMockRoutes !== undefined && mockRoute.routeId) {
@@ -120,8 +120,8 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
         }
     },
     deleteMockRoute: async (mockRouteId: string) => {
-        set({ mockRoutes: { isLoading: true, isError: false } });
         const prevMockRoutes = get().mockRoutes.value;
+        set({ mockRoutes: { ...get().mockRoutes, isLoading: true } });
         try {
             await api.deleteRouteAsync(mockRouteId);
             if (prevMockRoutes !== undefined) {

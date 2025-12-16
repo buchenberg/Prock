@@ -61,8 +61,8 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
         }
     },
     createDocument: async (document) => {
-        set({ documents: { isLoading: true, isError: false } });
         const prevDocuments = get().documents.value;
+        set({ documents: { ...get().documents, isLoading: true, isError: false } });
         try {
             const response = await api.createOpenApiDocumentAsync(document);
             if (prevDocuments !== undefined) {
@@ -74,8 +74,8 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
         catch (error: unknown) {
             if (axios.isAxiosError(error)) {
                 let message: string;
-                
-                switch (error.status){
+
+                switch (error.status) {
                     case 400:
                         message = error.response?.data || "Invalid request";
                         break;
@@ -94,8 +94,8 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
         }
     },
     updateDocument: async (documentId: string, document: Partial<OpenApiDocument>) => {
-        set({ documents: { isLoading: true, isError: false } });
         const prevDocuments = get().documents.value;
+        set({ documents: { ...get().documents, isLoading: true, isError: false } });
         try {
             const response = await api.updateOpenApiDocumentAsync(documentId, document);
             if (prevDocuments !== undefined) {
@@ -134,8 +134,8 @@ export const useOpenApiStore = create<OpenApiStore>()((set, get) => ({
         }
     },
     deleteDocument: async (documentId: string) => {
-        set({ documents: { isLoading: true, isError: false } });
         const prevDocuments = get().documents.value;
+        set({ documents: { ...get().documents, isLoading: true, isError: false } });
         try {
             await api.deleteOpenApiDocumentAsync(documentId);
             if (prevDocuments !== undefined) {

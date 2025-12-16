@@ -8,7 +8,8 @@ import {
     Table,
     Alert,
     Badge,
-    Spinner
+    Spinner,
+    Modal
 } from 'react-bootstrap';
 import { useOpenApiStore, OpenApiDocument } from '../../store/useOpenApiStore';
 import JsonModal from './JsonModal';
@@ -20,7 +21,6 @@ const OpenApiDocuments: React.FC = () => {
     const {
         documents,
         getDocuments,
-        updateDocument,
         deleteDocument,
         fetchOpenApiJson
     } = useOpenApiStore();
@@ -29,6 +29,10 @@ const OpenApiDocuments: React.FC = () => {
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [showJsonModal, setShowJsonModal] = useState(false);
     const [selectedDocument, setSelectedDocument] = useState<OpenApiDocument | null>(null);
+
+    // Delete Modal State
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [documentToDelete, setDocumentToDelete] = useState<OpenApiDocument | null>(null);
 
     useEffect(() => {
         getDocuments();
@@ -41,14 +45,21 @@ const OpenApiDocuments: React.FC = () => {
     }, [fetchOpenApiJson, selectedDocument]);
 
 
-    const handleDelete = async (documentId: string) => {
-        if (window.confirm('Are you sure you want to delete this OpenAPI document?')) {
-            deleteDocument(documentId);
-        }
+    const handleShowDeleteModal = (document: OpenApiDocument) => {
+        setDocumentToDelete(document);
+        setShowDeleteModal(true);
     };
 
-    const handleToggleActive = async (document: OpenApiDocument) => {
-        updateDocument(document.documentId, { isActive: !document.isActive });
+    const handleCloseDeleteModal = () => {
+        setDocumentToDelete(null);
+        setShowDeleteModal(false);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (documentToDelete) {
+            deleteDocument(documentToDelete.documentId);
+            handleCloseDeleteModal();
+        }
     };
 
     return (
@@ -88,7 +99,6 @@ const OpenApiDocuments: React.FC = () => {
                                     <th>Title</th>
                                     <th>Version</th>
                                     <th>Description</th>
-                                    <th>Status</th>
                                     <th>Created</th>
                                     <th>Actions</th>
                                 </tr>
@@ -105,11 +115,6 @@ const OpenApiDocuments: React.FC = () => {
                                         <td className="text-truncate" style={{ maxWidth: '200px' }}>
                                             {doc.description || '-'}
                                         </td>
-                                        <td>
-                                            <Badge bg={doc.isActive ? 'success' : 'secondary'}>
-                                                {doc.isActive ? 'Active' : 'Inactive'}
-                                            </Badge>
-                                        </td>
                                         <td>{formatDate(doc.createdAt)}</td>
                                         <td>
                                             <Button
@@ -125,17 +130,10 @@ const OpenApiDocuments: React.FC = () => {
                                                 View
                                             </Button>
                                             <Button
-                                                variant={doc.isActive ? 'outline-warning' : 'outline-success'}
-                                                size="sm"
-                                                className="me-2"
-                                                onClick={() => handleToggleActive(doc)}
-                                            >
-                                                {doc.isActive ? 'Deactivate' : 'Activate'}
-                                            </Button>
-                                            <Button
                                                 variant="outline-danger"
                                                 size="sm"
-                                                onClick={() => handleDelete(doc.documentId)}
+                                                onClick={() => handleShowDeleteModal(doc)}
+                                                data-testid={`delete-doc-btn-${doc.documentId}`}
                                             >
                                                 Delete
                                             </Button>
@@ -171,6 +169,24 @@ const OpenApiDocuments: React.FC = () => {
                 documentId={selectedDocument?.documentId || ''}
                 onHide={() => setShowJsonModal(false)}
             />
+
+            {/* Delete Confirmation Modal */}
+            <Modal show={showDeleteModal} onHide={handleCloseDeleteModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Delete OpenAPI Document</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to delete the document <strong>{documentToDelete?.title || 'Untitled'}</strong>?
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCloseDeleteModal}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={handleConfirmDelete} data-testid="confirm-delete-doc-btn">
+                        Delete
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Container>
     );
 };

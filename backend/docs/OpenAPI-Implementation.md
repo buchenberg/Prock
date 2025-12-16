@@ -36,7 +36,7 @@ Creates a new OpenAPI document from JSON specification.
 Updates an existing OpenAPI document.
 
 #### DELETE `/prock/api/openapi-documents/{documentId}`
-Soft deletes an OpenAPI document (sets IsActive to false).
+Removes an OpenAPI document permanently (Hard Delete).
 
 #### GET `/prock/api/openapi-documents/{documentId}/json`
 Returns the original OpenAPI JSON specification.
@@ -59,16 +59,16 @@ The entities are stored in MongoDB collections:
    - Get specific document for detailed path/operation info
    - Filter by active status
 
-3. **Integration with EF Core:**
+3. **Integration with Repository:**
    ```csharp
    // Get all active documents
-   var docs = await dbContext.GetActiveOpenApiDocumentsAsync();
+   var docs = await repository.GetAllDocumentsAsync();
    
    // Get specific document
-   var doc = await dbContext.GetOpenApiDocumentByIdAsync(documentId);
+   var doc = await repository.GetDocumentByIdAsync(documentId);
    
-   // Get by title
-   var doc = await dbContext.GetOpenApiDocumentByTitleAsync("My API");
+   // Create from DTO
+   await repository.CreateDocumentAsync(createDto);
    ```
 
 ### Benefits

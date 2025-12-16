@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Net;
 using backend.Data;
 using backend.Endpoints;
+using backend.Repositories;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 using Yarp.ReverseProxy.Forwarder;
@@ -30,6 +32,10 @@ builder.Services.AddSingleton(new HttpMessageInvoker(new SocketsHttpHandler
     ConnectTimeout = TimeSpan.FromSeconds(15),
 }));
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddScoped<IOpenApiRepository, OpenApiRepository>();
+builder.Services.AddScoped<IOpenApiService, OpenApiService>();
+builder.Services.AddScoped<IMockRouteRepository, MockRouteRepository>();
+builder.Services.AddScoped<IProckConfigRepository, ProckConfigRepository>();
 builder.Services.AddSwaggerGen(opt => opt.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
 {
     Title = "Prock API",

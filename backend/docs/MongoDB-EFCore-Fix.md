@@ -103,3 +103,5 @@ If needed, you can add helper methods to:
 4. **Document Database Pattern**: ✅ Chosen - Best fit for MongoDB
 
 This fix maintains full functionality while working within the constraints of the MongoDB EF Core provider.
+
+> **Update:** This logic is now encapsulated within the `OpenApiRepository`. The Service layer interacts purely with DTOs, unaware of the underlying BSON complexities.

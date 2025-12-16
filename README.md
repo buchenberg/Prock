@@ -90,7 +90,7 @@
 
 ## Architecture
 
-- **Backend:** .NET, [YARP](https://microsoft.github.io/reverse-proxy/) for proxying, MongoDB for storage.
+- **Backend:** .NET, [YARP](https://microsoft.github.io/reverse-proxy/) for proxying, MongoDB for storage. Implements **Repository Pattern** with DTOs for clean separation.
 - **Frontend:** React + Vite + React Bootstrap.
 - **Mocks:** Stored in MongoDB, identified by `routeId` (GUID/UUID).
 

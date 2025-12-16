@@ -35,33 +35,8 @@ public class ProckDbContext : DbContext
         modelBuilder.Entity<MockRoute>().ToCollection("mockRoutes");
         modelBuilder.Entity<ProckConfig>().ToCollection("prockConfig");
         modelBuilder.Entity<OpenApiSpecification>().ToCollection("openApiDocuments");
-
-        // Configure OpenApiDocument entity specifically for MongoDB
-        // modelBuilder.Entity<OpenApiSpecification>(entity =>
-        // {
-        //     entity.HasKey(e => e._id);
-        //     entity.Property(e => e.DocumentId);
-        //     entity.Property(e => e.Title);
-        //     entity.Property(e => e.Version);
-        //     entity.Property(e => e.Description);
-        //     entity.Property(e => e.OpenApiVersion);
-        //     entity.Property(e => e.BasePath);
-        //     entity.Property(e => e.Host);
-        //     entity.Property(e => e.Schemes);
-        //     entity.Property(e => e.Consumes);
-        //     entity.Property(e => e.Produces);
-        //     entity.Property(e => e.CreatedAt);
-        //     entity.Property(e => e.UpdatedAt);
-        //     entity.Property(e => e.IsActive);
-        //     entity.Property(e => e.OriginalJson);
-        //     entity.Property(e => e.Paths);
-        //     // Ignore BsonDocument properties as they're not supported by EF Core
-        //     // entity.Ignore(e => e.PathsData);
-        //     // entity.Ignore(e => e.ComponentsData);
-        //     // entity.Ignore(e => e.TagsData);
-        //     // entity.Ignore(e => e.ServersData);
-        //     // entity.Ignore(e => e.ExternalDocsData);
-        // });
+        modelBuilder.Entity<OpenApiSpecification>().OwnsMany(x => x.Paths);
+        modelBuilder.Entity<OpenApiSpecification>().HasKey(x => x._id);
 
         // Configure MockRoute entity
         modelBuilder.Entity<MockRoute>(entity =>

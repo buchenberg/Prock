@@ -1,6 +1,0 @@
-{
-    "title": "Dummy API for Delete Test",
-    "version": "1.0.0",
-    "description": "Test doc to ensure list is not empty",
-    "openApiJson": "{\"openapi\": \"3.0.0\", \"info\": {\"title\": \"Dummy API\", \"version\": \"1.0.0\"}, \"paths\": {}}"
-}

@@ -1,8 +1,8 @@
 import { Editor } from '@monaco-editor/react';
 import './MockRoutes.css';
 import { useState, useEffect } from "react";
-import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack } from "react-bootstrap";
-import { PencilSquare, PlusCircle, Trash } from "react-bootstrap-icons";
+import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack, Alert } from "react-bootstrap";
+import { PencilSquare, Trash } from "react-bootstrap-icons";
 import { CodeBlock, obsidian } from "react-code-blocks";
 import { MockRoute, useProckStore } from '../store/useProckStore';
 import { AsyncData } from '../store/AsyncData';
@@ -134,14 +134,19 @@ export default function MockRoutes() {
 
 
     return <Container fluid className='mt-3'>
-        <div className='mb-3'>
-            <Stack direction='horizontal' gap={2} className='mt-3'>
+        <Row className="mb-3">
+            <Col>
                 <h4>Mock Routes</h4>
-                <PlusCircle className='icon-btn' onClick={handleShowCreateModal} data-testid="create-route-btn" />
-            </Stack>
-        </div>
+                <p className="text-muted">Manage functionality and responses for your mock routes.</p>
+            </Col>
+            <Col xs="auto">
+                <Button variant="outline-primary" onClick={handleShowCreateModal} data-testid="create-route-btn">
+                    Add Route
+                </Button>
+            </Col>
+        </Row>
         {mockRoutes.value ?
-            <>
+            (mockRoutes.value.length > 0 ? (
                 <Stack gap={3}>
                     {mockRoutes.value.map((route) => {
                         return (
@@ -202,7 +207,11 @@ export default function MockRoutes() {
                         )
                     })}
                 </Stack>
-            </>
+            ) : (
+                <div className="text-center p-4">
+                    <Alert variant='warning' className="text-muted">No mock routes found. Create a mock route or generate mock routes from an OpenAPI spec.</Alert>
+                </div>
+            ))
             :
             <>
                 {/* <div className="d-flex justify-content-around"><p>{errorMessage}</p></div> */}

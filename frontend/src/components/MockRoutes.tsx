@@ -2,7 +2,7 @@ import { Editor } from '@monaco-editor/react';
 import './MockRoutes.css';
 import { useState, useEffect } from "react";
 import { Badge, Button, Card, Col, Container, Form, Modal, Row, Spinner, Stack, Alert } from "react-bootstrap";
-import { PencilSquare, Trash } from "react-bootstrap-icons";
+import { PencilSquare, Trash, ChevronDown, ChevronRight } from "react-bootstrap-icons";
 import { CodeBlock, obsidian } from "react-code-blocks";
 import { MockRoute, useProckStore } from '../store/useProckStore';
 import { AsyncData } from '../store/AsyncData';
@@ -19,6 +19,7 @@ export default function MockRoutes() {
 
     const [selectedRoute, setSelectedRoute] = useState<MockRoute>();
     const [newRoute, setNewRoute] = useState<MockRoute>();
+    const [expandedRoutes, setExpandedRoutes] = useState<Record<string, boolean>>({});
 
 
     const [showEditModal, setShowEditModal] = useState(false);
@@ -149,17 +150,24 @@ export default function MockRoutes() {
             (mockRoutes.value.length > 0 ? (
                 <Stack gap={3}>
                     {mockRoutes.value.map((route) => {
+                        const isExpanded = !!expandedRoutes[route.routeId!];
                         return (
                             <Card key={route.routeId} data-testid={`mock-route-card-${route.routeId}`}>
-                                <Card.Header>
-                                    <Row>
+                                <Card.Header
+                                    onClick={() => route.routeId && setExpandedRoutes(prev => ({ ...prev, [route.routeId!]: !prev[route.routeId!] }))}
+                                    style={{ cursor: 'pointer' }}
+                                >
+                                    <Row className="align-items-center">
+                                        <Col xs="auto">
+                                            {isExpanded ? <ChevronDown /> : <ChevronRight />}
+                                        </Col>
                                         <Col>
-                                            <Card.Title>
+                                            <Card.Title className="mb-0">
                                                 {route.method && renderMethodBadge(route.method)}
                                                 {route.path}
                                             </Card.Title>
                                         </Col>
-                                        <Col xs={2}>
+                                        <Col xs={2} onClick={(e) => e.stopPropagation()}>
                                             <Form.Check
                                                 type="switch"
                                                 id={`${route.routeId}-switch`}
@@ -180,29 +188,33 @@ export default function MockRoutes() {
                                         </Col>
                                     </Row>
                                 </Card.Header>
-                                <Card.Body>
-                                    <Card.Subtitle className='mt-2'>
-                                        Mock {route.httpStatusCode} Response:
-                                    </Card.Subtitle>
-                                    <CodeBlock
-                                        language="json"
-                                        text={JSON.stringify(route.mock, null, 2)}
-                                        theme={obsidian}
-                                        showLineNumbers={false}
-                                    />
+                                {isExpanded && (
+                                    <>
+                                        <Card.Body>
+                                            <Card.Subtitle className='mt-2'>
+                                                Mock {route.httpStatusCode} Response:
+                                            </Card.Subtitle>
+                                            <CodeBlock
+                                                language="json"
+                                                text={JSON.stringify(route.mock, null, 2)}
+                                                theme={obsidian}
+                                                showLineNumbers={false}
+                                            />
 
-                                </Card.Body>
-                                <Card.Footer>
+                                        </Card.Body>
+                                        <Card.Footer>
 
-                                    <Stack direction='horizontal' gap={2} className="float-end">
-                                        <Button size='sm' variant='secondary' onClick={() => handleShowDeleteModal(route)} data-testid={`delete-route-btn-${route.routeId}`}>
-                                            <Trash />
-                                        </Button>
-                                        <Button size='sm' onClick={() => handleShowEditModal(route)} data-testid={`edit-route-btn-${route.routeId}`}>
-                                            <PencilSquare />
-                                        </Button>
-                                    </Stack>
-                                </Card.Footer>
+                                            <Stack direction='horizontal' gap={2} className="float-end">
+                                                <Button size='sm' variant='secondary' onClick={() => handleShowDeleteModal(route)} data-testid={`delete-route-btn-${route.routeId}`}>
+                                                    <Trash />
+                                                </Button>
+                                                <Button size='sm' onClick={() => handleShowEditModal(route)} data-testid={`edit-route-btn-${route.routeId}`}>
+                                                    <PencilSquare />
+                                                </Button>
+                                            </Stack>
+                                        </Card.Footer>
+                                    </>
+                                )}
                             </Card>
                         )
                     })}

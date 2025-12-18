@@ -68,8 +68,8 @@ public class OpenApiRepository : IOpenApiRepository
 
     public async Task<OpenApiDocumentDto> CreateDocumentAsync(CreateOpenApiDocumentDto request)
     {
-        var msOpenApiDocument = MockDataGenerator.ParseOpenApiJson(request.OpenApiJson) 
-                                ?? throw new ArgumentException("Invalid OpenAPI JSON");
+        var msOpenApiDocument = MockDataGenerator.ParseOpenApiSpec(request.OpenApiJson) 
+                                ?? throw new ArgumentException("Invalid OpenAPI Specification");
 
         var oasDocumentId = Guid.NewGuid();
         var entity = new OpenApiSpecification
@@ -104,8 +104,8 @@ public class OpenApiRepository : IOpenApiRepository
 
         if (!string.IsNullOrEmpty(request.OpenApiJson))
         {
-             var msOpenApiDocument = MockDataGenerator.ParseOpenApiJson(request.OpenApiJson) 
-                                     ?? throw new ArgumentException("Invalid OpenAPI JSON");
+             var msOpenApiDocument = MockDataGenerator.ParseOpenApiSpec(request.OpenApiJson) 
+                                     ?? throw new ArgumentException("Invalid OpenAPI Specification");
              entity.OriginalJson = request.OpenApiJson;
              // Update derived fields if Json changes? Usually paths changes.
              // EF Core owned collection replacement:

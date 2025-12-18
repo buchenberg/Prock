@@ -44,7 +44,7 @@ public class OpenApiService : IOpenApiService
         {
             if (string.IsNullOrEmpty(request.OpenApiJson))
             {
-                return TypedResults.BadRequest("OpenAPI JSON is required");
+                return TypedResults.BadRequest("OpenAPI content is required");
             }
 
             var result = await _repository.CreateDocumentAsync(request);
@@ -89,12 +89,12 @@ public class OpenApiService : IOpenApiService
             return TypedResults.NotFound();
 
         if (string.IsNullOrEmpty(document.OriginalJson))
-            return TypedResults.BadRequest("No OpenAPI JSON found for this document.");
+            return TypedResults.BadRequest("No OpenAPI content found for this document.");
 
-        // Parse OpenAPI JSON
-        var openApiDoc = MockDataGenerator.ParseOpenApiJson(document.OriginalJson);
+        // Parse OpenAPI Spec
+        var openApiDoc = MockDataGenerator.ParseOpenApiSpec(document.OriginalJson);
         if (openApiDoc == null)
-            return TypedResults.BadRequest("Invalid OpenAPI JSON.");
+            return TypedResults.BadRequest("Invalid OpenAPI Specification.");
 
         var createdRoutes = new List<MockRouteDto>();
         int routeCount = 0;

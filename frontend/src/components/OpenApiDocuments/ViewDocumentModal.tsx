@@ -6,11 +6,11 @@ import { useProckStore } from "../../store/useProckStore";
 
 
 
-const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocument, setShowJsonModal }: {
+const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocument, setShowScalarModal }: {
     showDetailModal: boolean;
     setShowDetailModal: (show: boolean) => void;
     selectedDocument: OpenApiDocument | null;
-    setShowJsonModal: (show: boolean) => void;
+    setShowScalarModal: (show: boolean) => void;
 }) => {
     const { generateMockRoutesFromOpenApi } = useProckStore();
     const navigate = useNavigate();
@@ -71,11 +71,11 @@ const ViewDocumentModal = ({ showDetailModal, setShowDetailModal, selectedDocume
                     Close
                 </Button>
                 <Button variant="outline-primary" onClick={() => {
-                    setShowJsonModal(true);
+                    setShowScalarModal(true);
                     setShowDetailModal(false);
                 }
                 }>
-                    View JSON
+                    View Spec
                 </Button>
                 <Button
                     variant="outline-primary"

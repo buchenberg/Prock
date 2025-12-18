@@ -12,7 +12,7 @@ import {
     Modal
 } from 'react-bootstrap';
 import { useOpenApiStore, OpenApiDocument } from '../../store/useOpenApiStore';
-import JsonModal from './JsonModal';
+import ScalarModal from './ScalarModal';
 import { formatDate } from '../../helpers/functions';
 import ViewDocumentModal from './ViewDocumentModal';
 import CreateDocumentModal from './CreateDocumentModal';
@@ -27,7 +27,7 @@ const OpenApiDocuments: React.FC = () => {
 
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [showJsonModal, setShowJsonModal] = useState(false);
+    const [showScalarModal, setShowScalarModal] = useState(false);
     const [selectedDocument, setSelectedDocument] = useState<OpenApiDocument | null>(null);
 
     // Delete Modal State
@@ -160,14 +160,14 @@ const OpenApiDocuments: React.FC = () => {
                 showDetailModal={showDetailModal}
                 setShowDetailModal={setShowDetailModal}
                 selectedDocument={selectedDocument}
-                setShowJsonModal={setShowJsonModal}
+                setShowScalarModal={setShowScalarModal}
             />
-            {/* JSON Modal */}
-            <JsonModal
+            {/* Scalar Modal */}
+            <ScalarModal
                 title={documents.value?.find(d => d.documentId === selectedDocument?.documentId)?.title || ''}
-                showJsonModal={showJsonModal}
+                showScalarModal={showScalarModal}
                 documentId={selectedDocument?.documentId || ''}
-                onHide={() => setShowJsonModal(false)}
+                onHide={() => setShowScalarModal(false)}
             />
 
             {/* Delete Confirmation Modal */}

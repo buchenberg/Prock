@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Modal, Form, Alert, Row, Col, Button } from "react-bootstrap";
 import { CreateOpenApiDocument, useOpenApiStore } from "../../store/useOpenApiStore";
+import { dereference } from '@scalar/openapi-parser';
 
 const CreateDocumentModal = ({ show, onHide }: {
     show: boolean;
@@ -22,41 +23,50 @@ const CreateDocumentModal = ({ show, onHide }: {
         setUploadError(null);
 
         if (!createForm.openApiJson.trim()) {
-            setUploadError('OpenAPI JSON is required');
+            setUploadError('OpenAPI content is required');
             return;
         }
 
         try {
-            // Try to parse JSON to validate it
-            JSON.parse(createForm.openApiJson);
-            createDocument(createForm);
-            onHide();
-            setCreateForm({ title: '', version: '', description: '', openApiJson: '' });
-        } catch {
-            setUploadError('Invalid JSON format');
+            // Validate using Scalar parser (relaxed check via dereference)
+            // 'validate' can be too strict (e.g. failing on missing $ref in specific contexts)
+            // If dereference works and returns a schema, we consider it valid enough for upload.
+            const { schema, errors } = await dereference(createForm.openApiJson);
+
+            if (schema) {
+                createDocument(createForm);
+                onHide();
+                setCreateForm({ title: '', version: '', description: '', openApiJson: '' });
+            } else {
+                const msg = errors?.[0]?.message || 'Unknown error';
+                setUploadError(`Invalid OpenAPI format: ${msg}`);
+            }
+        } catch (err: any) {
+            setUploadError(`Validation failed: ${err.message}`);
         }
     };
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (event) => {
+            reader.onload = async (event) => {
                 const content = event.target?.result as string;
                 setCreateForm(prev => ({ ...prev, openApiJson: content }));
 
-                // Try to extract title and version from the JSON
+                // Try to extract title and version using Scalar parser
                 try {
-                    const parsed = JSON.parse(content);
-                    if (parsed.info) {
+                    const { schema } = await dereference(content);
+                    const doc = schema as any;
+                    if (doc?.info) {
                         setCreateForm(prev => ({
                             ...prev,
-                            title: prev.title || parsed.info.title || '',
-                            version: prev.version || parsed.info.version || '',
-                            description: prev.description || parsed.info.description || ''
+                            title: prev.title || doc.info.title || '',
+                            version: prev.version || doc.info.version || '',
+                            description: prev.description || doc.info.description || ''
                         }));
                     }
                 } catch {
-                    // Ignore parsing errors for now
+                    // Ignore parsing errors during file selection/typing, validation happens on submit
                 }
             };
             reader.readAsText(file);

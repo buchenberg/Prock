@@ -6,9 +6,9 @@ namespace backend.Utils;
 
 public static class MockDataGenerator
 {
-    public static MsOpenApi.OpenApiDocument? ParseOpenApiJson(string json)
+    public static MsOpenApi.OpenApiDocument? ParseOpenApiSpec(string specContent)
     {
-        Console.WriteLine($"OpenAPI document parse attempt for JSON of length {json.Length}");
+        Console.WriteLine($"OpenAPI document parse attempt for content of length {specContent.Length}");
         try
         {
             var reader = new OpenApiStringReader(settings: new OpenApiReaderSettings
@@ -17,15 +17,21 @@ public static class MockDataGenerator
                 // LoadExternalRefs = false,
             });
 
-            var openApiDocument = reader.Read(json, out var diagnostic);
+            var openApiDocument = reader.Read(specContent, out var diagnostic);
             
             if (diagnostic.Errors.Count > 0)
             {
-                Console.WriteLine($"OpenAPI document parsing errors: {string.Join(", ", diagnostic.Errors.Select(e => e.Message))}");
-                return null;
+                // Log errors but don't fail if we got a document. Many tools produce "invalid" but usable specs (e.g. .NET generics in schema names).
+                Console.WriteLine($"OpenAPI document parsing warnings: {string.Join(", ", diagnostic.Errors.Select(e => e.Message))}");
             }
-            Console.WriteLine($"OpenAPI document parse attempt success!");
-            return openApiDocument;
+
+            if (openApiDocument != null)
+            {
+                 Console.WriteLine($"OpenAPI document parse attempt success!");
+                 return openApiDocument;
+            }
+            
+            return null;
         }
         catch (Exception ex)
         {

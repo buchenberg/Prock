@@ -22,6 +22,8 @@ export interface OpenApiDocument {
 
 export interface OpenApiDocumentDetail extends OpenApiDocument {
     originalJson?: string;
+    // value can be the parsed object (OpenAPI.Document) or a raw YAML string
+    value?: OpenAPI.Document | string;
 }
 
 export interface CreateOpenApiDocument {
@@ -33,7 +35,7 @@ export interface CreateOpenApiDocument {
 
 interface OpenApiStore {
     documents: AsyncData<OpenApiDocument[]>;
-    documentDetail: AsyncData<OpenAPI.Document | undefined>;
+    documentDetail: AsyncData<OpenAPI.Document | string | undefined>;
     getDocuments: () => void;
     createDocument: (document: CreateOpenApiDocument) => void;
     updateDocument: (documentId: string, document: Partial<OpenApiDocument>) => void;

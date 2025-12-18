@@ -44,10 +44,12 @@ public static class OpenApiEndpoints
             var result = await service.GetDocumentByIdAsync(documentId);
             if (result.Result is Ok<OpenApiDocumentDetailDto> ok && ok.Value != null && !string.IsNullOrEmpty(ok.Value.OriginalJson))
             {
-                var parsed = MockDataGenerator.ParseOpenApiJson(ok.Value.OriginalJson);
+                var parsed = MockDataGenerator.ParseOpenApiSpec(ok.Value.OriginalJson);
                 if (parsed != null)
                 {
-                    return TypedResults.Ok(parsed);
+                   var content = ok.Value.OriginalJson;
+                   var isJson = content.TrimStart().StartsWith("{") || content.TrimStart().StartsWith("[");
+                   return Results.Text(content, contentType: isJson ? "application/json" : "text/yaml", statusCode: 200);
                 }
                 return TypedResults.BadRequest("Invalid OpenAPI JSON format");
             }

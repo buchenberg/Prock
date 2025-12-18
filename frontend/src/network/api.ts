@@ -6,8 +6,8 @@ axios.interceptors.request.use(
     config => {
         config.headers['Accept'] = 'application/json';
         config.headers['Content-Type'] = 'application/json';
-            return config;
-        },
+        return config;
+    },
     error => {
         if (axios.isAxiosError(error)) {
             console.error(error.message);
@@ -86,7 +86,7 @@ export const deleteOpenApiDocumentAsync = (documentId: string) => {
 }
 
 export const fetchOpenApiDocumentJsonAsync = (documentId: string) => {
-    return axios.get<OpenAPI.Document>(`/prock/api/openapi-documents/${documentId}/json`);
+    return axios.get<OpenAPI.Document | string>(`/prock/api/openapi-documents/${documentId}/json`);
 }
 
 export const generateMockRoutesFromOpenApi = (documentId: string) => {

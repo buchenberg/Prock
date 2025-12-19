@@ -16,6 +16,7 @@ export default function MockRoutes() {
     const createMockRoute = useProckStore((state) => state.createMockRoute);
     const updateMockRoute = useProckStore((state) => state.updateMockRoute);
     const deleteMockRoute = useProckStore((state) => state.deleteMockRoute);
+    const deleteAllMockRoutes = useProckStore((state) => state.deleteAllMockRoutes);
 
     const [selectedRoute, setSelectedRoute] = useState<MockRoute>();
     const [newRoute, setNewRoute] = useState<MockRoute>();
@@ -54,6 +55,13 @@ export default function MockRoutes() {
     const handleShowDeleteModal = (route: MockRoute) => {
         setSelectedRoute(route);
         setShowDeleteModal(true);
+    }
+
+    const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+
+    const handleDeleteAllRoutes = async () => {
+        await deleteAllMockRoutes();
+        setShowDeleteAllModal(false);
     }
 
     const handleSubmitNewRoute = async () => {
@@ -141,9 +149,16 @@ export default function MockRoutes() {
                 <p className="text-muted">Manage functionality and responses for your mock routes.</p>
             </Col>
             <Col xs="auto">
-                <Button variant="outline-primary" onClick={handleShowCreateModal} data-testid="create-route-btn">
-                    Add Route
-                </Button>
+                <Stack direction="horizontal" gap={2}>
+                    {mockRoutes.value && mockRoutes.value.length > 0 && (
+                        <Button variant="outline-danger" onClick={() => setShowDeleteAllModal(true)} data-testid="delete-all-routes-btn">
+                            Delete All
+                        </Button>
+                    )}
+                    <Button variant="outline-primary" onClick={handleShowCreateModal} data-testid="create-route-btn">
+                        Add Route
+                    </Button>
+                </Stack>
             </Col>
         </Row>
         {mockRoutes.value ?
@@ -248,6 +263,23 @@ export default function MockRoutes() {
                 </Button>
                 <Button variant="primary" onClick={handleDeleteRoute} disabled={!selectedRoute?.routeId} data-testid="confirm-delete-route-btn">
                     Delete
+                </Button>
+            </Modal.Footer>
+        </Modal>
+        <Modal show={showDeleteAllModal} onHide={() => setShowDeleteAllModal(false)}>
+            <Modal.Header closeButton>
+                <Modal.Title>Delete All Routes</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>Are you sure you want to delete <strong>all {mockRoutes.value?.length || 0} mock routes</strong>?</p>
+                <p className="text-danger">This action cannot be undone.</p>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={() => setShowDeleteAllModal(false)}>
+                    Cancel
+                </Button>
+                <Button variant="danger" onClick={handleDeleteAllRoutes} data-testid="confirm-delete-all-routes-btn">
+                    Delete All
                 </Button>
             </Modal.Footer>
         </Modal>

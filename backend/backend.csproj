@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="backend.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AspNetCore.Proxy" Version="4.5.0" />
     <PackageReference Include="AspNetCore.Scalar" Version="1.1.8" />
     <PackageReference Include="Microsoft.OpenApi.Readers" Version="1.6.24" />

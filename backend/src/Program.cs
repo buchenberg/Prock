@@ -19,6 +19,14 @@ builder.Logging.AddConsole();
 builder.Services.AddHttpForwarder();
 builder.Services.AddSignalR();
 builder.Services.AddCors();
+builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+{
+    options.Limits.MaxRequestBodySize = 524_288_000; // 500 MB
+});
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 524_288_000; // 500 MB
+});
 var dbDataSource = new MongoClient(connectionString);
 builder.Services.AddDbContext<ProckDbContext>(options => options.UseMongoDB(dbDataSource, dbName));
 builder.Services.AddSingleton(new HttpMessageInvoker(new SocketsHttpHandler

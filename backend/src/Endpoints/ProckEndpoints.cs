@@ -130,6 +130,13 @@ public static class ProckEndpoints
             return TypedResults.Ok();
         });
 
+        app.MapDelete("/prock/api/mock-routes", async Task<Ok<int>> (IMockRouteRepository repo) =>
+        {
+            var deletedCount = await repo.DeleteAllRoutesAsync();
+            app.Logger.LogInformation("Deleted all {Count} mock routes", deletedCount);
+            return TypedResults.Ok(deletedCount);
+        });
+
         app.MapPost("/prock/api/restart", async Task<int> (CancellationToken cancellationToken) =>
         {
             app.Logger.LogInformation("Restart called...");

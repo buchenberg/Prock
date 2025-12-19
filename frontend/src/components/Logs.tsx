@@ -2,9 +2,17 @@ import { ReactNode, useState } from "react";
 import { Card, Container } from "react-bootstrap";
 import signalR from "use-signalr-hub"
 
-const ProckNotification = ({ date, entry }: { date: string, entry: string }) => (
-    <span><span className="text-muted">{date}:</span> {entry}</span>
-)
+type LogType = 'proxy' | 'mock';
+
+const ProckNotification = ({ date, entry, type }: { date: string, entry: string, type: LogType }) => {
+    const colorClass = type === 'mock' ? 'text-info' : '';
+    return (
+        <span>
+            <span className="text-muted">{date}:</span>{' '}
+            <span className={colorClass}>{entry}</span>
+        </span>
+    );
+}
 
 export default function Logs() {
     const [notifications, setNotifications] = useState<ReactNode[]>([]);
@@ -12,9 +20,16 @@ export default function Logs() {
     //This is a hook and not a side-effect
     signalR.useHub("http://localhost:5001/prock/api/signalr", {
         onConnected: (hub) => {
+            // Proxy requests - default color
             hub.on("ProxyRequest", (x: string) => {
                 setNotifications((p) => [...p,
-                <ProckNotification date={new Date().toISOString()} entry={x} />
+                <ProckNotification date={new Date().toISOString()} entry={x} type="proxy" />
+                ])
+            });
+            // Mock responses - blue
+            hub.on("MockResponse", (x: string) => {
+                setNotifications((p) => [...p,
+                <ProckNotification date={new Date().toISOString()} entry={x} type="mock" />
                 ])
             });
         },

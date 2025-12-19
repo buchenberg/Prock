@@ -97,6 +97,20 @@ public class MockRouteRepository : IMockRouteRepository
         return true;
     }
 
+    public async Task<int> DeleteAllRoutesAsync()
+    {
+        var allRoutes = await _db.MockRoutes.ToListAsync();
+        var count = allRoutes.Count;
+        
+        if (count > 0)
+        {
+            _db.MockRoutes.RemoveRange(allRoutes);
+            await _db.SaveChangesAsync();
+        }
+        
+        return count;
+    }
+
     public async Task<MockRouteDto?> SetRouteEnabledAsync(Guid routeId, bool enabled)
     {
         var entity = await _db.MockRoutes.SingleOrDefaultAsync(x => x.RouteId == routeId);
@@ -109,12 +123,53 @@ public class MockRouteRepository : IMockRouteRepository
 
     public async Task<MockRouteDto?> FindMatchingRouteAsync(string path, string method)
     {
-        var entity = await _db.MockRoutes.SingleOrDefaultAsync(x =>
+        // First, try exact match for better performance
+        var exactMatch = await _db.MockRoutes.SingleOrDefaultAsync(x =>
             string.Equals(x.Path, path, StringComparison.CurrentCultureIgnoreCase) &&
             string.Equals(x.Method, method, StringComparison.CurrentCultureIgnoreCase) &&
             x.Enabled);
 
-        return entity == null ? null : MapToDto(entity);
+        if (exactMatch != null)
+        {
+            return MapToDto(exactMatch);
+        }
+
+        // If no exact match, fetch all enabled routes for this method and try pattern matching
+        var enabledRoutes = await _db.MockRoutes
+            .Where(x => string.Equals(x.Method, method, StringComparison.CurrentCultureIgnoreCase) && x.Enabled)
+            .ToListAsync();
+
+        foreach (var route in enabledRoutes)
+        {
+            if (route.Path != null && IsPathMatch(route.Path, path))
+            {
+                return MapToDto(route);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Checks if a request path matches a route template path.
+    /// Route templates can contain path parameters like {id} or {projectKey} which match any value.
+    /// </summary>
+    internal static bool IsPathMatch(string routeTemplate, string requestPath)
+    {
+        // Convert route template to regex pattern
+        // Example: "/api/v1/projects/{projectKey}/jobs/{jobKey}" 
+        // becomes: "^/api/v1/projects/[^/]+/jobs/[^/]+$"
+        var pattern = "^" + System.Text.RegularExpressions.Regex.Escape(routeTemplate) + "$";
+        
+        // Replace escaped curly brace patterns with a regex that matches any non-slash characters
+        // Note: Regex.Escape escapes { to \{ but does NOT escape }
+        // So we look for \{...} pattern (escaped opening brace, unescaped closing brace)
+        pattern = System.Text.RegularExpressions.Regex.Replace(pattern, @"\\{[^}]+}", "[^/]+");
+        
+        return System.Text.RegularExpressions.Regex.IsMatch(
+            requestPath, 
+            pattern, 
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     }
 
     private static MockRouteDto MapToDto(MockRoute entity)

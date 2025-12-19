@@ -1,6 +1,7 @@
 import { Modal, Button, Container } from "react-bootstrap";
 import { ApiReferenceReact } from "@scalar/api-reference-react";
 import { useOpenApiStore } from "../../store/useOpenApiStore";
+import { useProckStore } from "../../store/useProckStore";
 import { useEffect } from "react";
 import '@scalar/api-reference-react/style.css';
 
@@ -13,6 +14,7 @@ const ScalarModal = ({ onHide, showScalarModal, title, documentId }: {
     documentId: string;
 }) => {
     const { documentDetail, fetchOpenApiJson } = useOpenApiStore();
+    const { prockConfig, getProckConfigs } = useProckStore();
     const navigate = useNavigate();
 
     const handleClose = () => {
@@ -21,10 +23,25 @@ const ScalarModal = ({ onHide, showScalarModal, title, documentId }: {
     };
 
     useEffect(() => {
+        getProckConfigs();
+    }, [getProckConfigs]);
+
+    useEffect(() => {
         if (showScalarModal && documentId) {
             fetchOpenApiJson(documentId);
         }
     }, [documentId, fetchOpenApiJson, showScalarModal]);
+
+    const serverUrl = prockConfig.value ? (() => {
+        let host = prockConfig.value.host;
+        if (host.includes('*')) {
+            host = host.replace('*', 'localhost');
+        }
+        if (!host.startsWith('http')) {
+            host = `http://${host}`;
+        }
+        return `${host}:${prockConfig.value.port}`;
+    })() : '';
 
     return (
         <Modal show={showScalarModal} fullscreen onHide={handleClose} size="lg">
@@ -39,6 +56,7 @@ const ScalarModal = ({ onHide, showScalarModal, title, documentId }: {
                                 content: typeof documentDetail.value === 'string'
                                     ? documentDetail.value
                                     : JSON.stringify(documentDetail.value),
+                                servers: serverUrl ? [{ url: serverUrl, description: 'Prock Proxy Server' }] : undefined,
                                 theme: 'purple',
                                 layout: 'modern',
                                 hideDarkModeToggle: true

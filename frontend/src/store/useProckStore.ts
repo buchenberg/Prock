@@ -34,6 +34,7 @@ interface ProckStore {
     createMockRoute: (mockRoute: MockRoute) => void;
     updateMockRoute: (mockRoute: MockRoute) => void;
     deleteMockRoute: (mockRouteId: string) => void;
+    deleteAllMockRoutes: () => Promise<void>;
     prockConfig: AsyncData<ServerConfig>;
     getProckConfigs: () => Promise<void>;
     updateUpstreamUrl: (upstreamUrl: string) => void;
@@ -140,6 +141,21 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
             }
         }
     },
+    deleteAllMockRoutes: async () => {
+        set({ mockRoutes: { ...get().mockRoutes, isLoading: true } });
+        try {
+            await api.deleteAllRoutesAsync();
+            set({ mockRoutes: { isLoading: false, isError: false, value: [] } });
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: error.message } });
+                console.error(error.message);
+            } else {
+                const typedError = error as Error;
+                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: typedError.message } });
+            }
+        }
+    },
     prockConfig: { isLoading: false, isError: false },
     getProckConfigs: async () => {
         set({ prockConfig: { isLoading: true, isError: false } });
@@ -184,7 +200,7 @@ export const useProckStore = create<ProckStore>()((set, get) => ({
             set({ mockRoutes: { isLoading: false, isError: false, value: response.data } });
         } catch (error: unknown) {
             if (axios.isAxiosError(error)) {
-            set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: error.message } });
+                set({ mockRoutes: { ...get().mockRoutes, isLoading: false, isError: true, errorMessage: error.message } });
                 console.error(error.message);
             } else {
                 const typedError = error as Error;

@@ -83,4 +83,134 @@ public class MockRouteRepositoryTests
         var saved = await _context.MockRoutes.FirstOrDefaultAsync(r => r.RouteId == route.RouteId);
         Assert.Null(saved);
     }
+
+    #region IsPathMatch Tests
+
+    [Theory]
+    [InlineData("/api/v1.0/projects/{projectKey}/monitoring/samples", "/api/v1.0/projects/ROI-059581/monitoring/samples", true)]
+    [InlineData("/api/v1/projects/{projectKey}/jobs/issue-rewards/{jobKey}/report", "/api/v1/projects/someprojectkey/jobs/issue-rewards/somejobkey/report", true)]
+    [InlineData("/api/users/{userId}", "/api/users/123", true)]
+    [InlineData("/api/users/{userId}", "/api/users/abc-def-ghi", true)]
+    [InlineData("/api/users/{userId}/posts/{postId}", "/api/users/123/posts/456", true)]
+    [InlineData("/api/users", "/api/users", true)]  // No path params - exact match
+    [InlineData("/api/users/{userId}", "/api/users/123/extra", false)]  // Extra path segment
+    [InlineData("/api/users/{userId}", "/api/users", false)]  // Missing path param
+    [InlineData("/api/users/{userId}/posts", "/api/users/123/comments", false)]  // Wrong suffix
+    [InlineData("/api/{version}/users/{userId}", "/api/v1/users/123", true)]  // Multiple path params
+    public void IsPathMatch_ReturnsExpectedResult(string routeTemplate, string requestPath, bool expected)
+    {
+        var result = MockRouteRepository.IsPathMatch(routeTemplate, requestPath);
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task FindMatchingRouteAsync_MatchesWildcardPath()
+    {
+        // Arrange - Create a route with path parameters
+        var route = new MockRoute 
+        { 
+            _id = ObjectId.GenerateNewId(), 
+            RouteId = Guid.NewGuid(), 
+            Path = "/api/v1.0/projects/{projectKey}/monitoring/samples", 
+            Method = "GET",
+            Mock = "{}",
+            Enabled = true 
+        };
+        _context.MockRoutes.Add(route);
+        await _context.SaveChangesAsync();
+
+        // Act - Try to match with actual path values
+        var result = await _repository.FindMatchingRouteAsync(
+            "/api/v1.0/projects/ROI-059581/monitoring/samples", 
+            "GET");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(route.RouteId, result.RouteId);
+    }
+
+    [Fact]
+    public async Task FindMatchingRouteAsync_MatchesMultipleWildcards()
+    {
+        // Arrange - Create a route with multiple path parameters
+        var route = new MockRoute 
+        { 
+            _id = ObjectId.GenerateNewId(), 
+            RouteId = Guid.NewGuid(), 
+            Path = "/api/v1/projects/{projectKey}/jobs/issue-rewards/{jobKey}/report", 
+            Method = "GET",
+            Mock = "{}",
+            Enabled = true 
+        };
+        _context.MockRoutes.Add(route);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.FindMatchingRouteAsync(
+            "/api/v1/projects/myproject/jobs/issue-rewards/myjob123/report", 
+            "GET");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(route.RouteId, result.RouteId);
+    }
+
+    [Fact]
+    public async Task FindMatchingRouteAsync_PrefersExactMatch()
+    {
+        // Arrange - Create both an exact match and a pattern match
+        var wildcardRoute = new MockRoute 
+        { 
+            _id = ObjectId.GenerateNewId(), 
+            RouteId = Guid.NewGuid(), 
+            Path = "/api/users/{userId}", 
+            Method = "GET",
+            Mock = "{\"type\":\"wildcard\"}",
+            Enabled = true 
+        };
+        var exactRoute = new MockRoute 
+        { 
+            _id = ObjectId.GenerateNewId(), 
+            RouteId = Guid.NewGuid(), 
+            Path = "/api/users/special", 
+            Method = "GET",
+            Mock = "{\"type\":\"exact\"}",
+            Enabled = true 
+        };
+        _context.MockRoutes.AddRange(wildcardRoute, exactRoute);
+        await _context.SaveChangesAsync();
+
+        // Act - Request the exact path
+        var result = await _repository.FindMatchingRouteAsync("/api/users/special", "GET");
+
+        // Assert - Should prefer exact match
+        Assert.NotNull(result);
+        Assert.Equal(exactRoute.RouteId, result.RouteId);
+    }
+
+    [Fact]
+    public async Task FindMatchingRouteAsync_DoesNotMatchDisabledRoutes()
+    {
+        // Arrange
+        var route = new MockRoute 
+        { 
+            _id = ObjectId.GenerateNewId(), 
+            RouteId = Guid.NewGuid(), 
+            Path = "/api/users/{userId}", 
+            Method = "GET",
+            Mock = "{}",
+            Enabled = false  // Disabled!
+        };
+        _context.MockRoutes.Add(route);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _repository.FindMatchingRouteAsync("/api/users/123", "GET");
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    #endregion
 }
+

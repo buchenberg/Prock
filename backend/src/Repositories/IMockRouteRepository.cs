@@ -10,6 +10,8 @@ public interface IMockRouteRepository
     Task CreateRoutesAsync(List<MockRouteDto> routes);
     Task<MockRouteDto?> UpdateRouteAsync(MockRouteDto route);
     Task<bool> DeleteRouteAsync(Guid routeId);
+    Task<int> DeleteAllRoutesAsync();
     Task<MockRouteDto?> SetRouteEnabledAsync(Guid routeId, bool enabled);
     Task<MockRouteDto?> FindMatchingRouteAsync(string path, string method);
 }
+
